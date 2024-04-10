@@ -1,0 +1,4 @@
+config BR2_PACKAGE_CUSTOMSERVICE
+	bool "customservice"
+	help
+	  A friendly service program that print a message

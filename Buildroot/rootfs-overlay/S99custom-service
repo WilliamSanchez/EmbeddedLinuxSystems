@@ -1,0 +1,22 @@
+#!/bin/sh
+
+case "$1" in
+	start)
+
+		echo "Starting custom service"
+		start-stop-daemon -S -n customservice -a /usr/bin/customservice
+		;;
+
+	stop)
+
+		echo "Stopping custom service"
+		start-stop-daemon -K -n customservice
+		;;
+
+	*)
+
+		echo "Usage: $0 {start|stop}"
+		exit 1
+esac
+
+exit 0
