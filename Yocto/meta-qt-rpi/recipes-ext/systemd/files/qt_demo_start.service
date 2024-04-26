@@ -7,6 +7,7 @@ Type=simple
 #Environment=QT_QPA_EGLFS_FORCE888=1
 #Environment=QT_QPA_PLATFORM=linuxfb
 Environment=QT_QPA_PLATFORM=eglfs
+Environment=QT_QPA_FONTDIR=/usr/share/fonts/ttf
 #Environment=QT_QPA_EGLFS_FORCEVSYNC=1
 #Environment=QT_PLUGIN_PATH=/usr/lib/qt5/plugins
 #Environment=QT_QPA_EGLFS_INTEGRATION=eglfs_viv

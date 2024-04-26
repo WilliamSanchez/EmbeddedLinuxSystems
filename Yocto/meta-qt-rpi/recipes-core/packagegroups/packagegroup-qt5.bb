@@ -43,5 +43,10 @@ RDEPENDS_${PN} = "\
     qtsensors \
     qtsensors-dev \
     qtsensors-mkspecs \
+    qtbase-fonts \
+    qtbase-fonts-pfa \
+    qtbase-fonts-pfb \
+    qtbase-fonts-qpf \
+    qtbase-fonts-ttf-dejavu \
+    qtbase-fonts-ttf-vera \
 "
-

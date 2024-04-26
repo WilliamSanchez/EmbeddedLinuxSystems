@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QWidget>
+#include <QLabel>
 #include <QPushButton>
 
 class MyButton : public QWidget {
@@ -20,11 +21,13 @@ MyButton::MyButton(QWidget *parent)
 int main(int argc, char *argv[]) {
 
   QApplication app(argc, argv);
+  QLabel label("Hello William QT!");
 
   MyButton window;
 
   window.resize(250, 150);
   window.setWindowTitle("QPushButton");
+  label.show();
   window.show();
 
   return app.exec();

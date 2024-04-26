@@ -1,8 +1,8 @@
 TEMPLATE = app
 TARGET = myQTApp
-INCLUDEPATH +=.
+DEPENDPATH += .
+INCLUDEPATH += .
 
-QT += gui widgets
-DEFINES += QT_DEPRECATED_WARNINGS
+QT += widgets
 
 SOURCES += myQTApp.cpp
