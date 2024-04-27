@@ -24,22 +24,34 @@ RDEPENDS_${PN} = "\
     qtconnectivity-tools \
     qtconnectivity-qmlplugins \
     qtimageformats-plugins \
+    qtlocation \
+    qtlocation-dev \
+    qtlocation-mkspecs \
+    qtlocation-plugins \
+    qtlocation-tools \
     qtmultimedia \
     qtmultimedia-dev \
     qtmultimedia-mkspecs \
     qtmultimedia-plugins \
     qtmultimedia-qmlplugins \
+    qtquickcontrols \
+    qtquickcontrols-dev \
+    qtquickcontrols-mkspecs \
+    qtquickcontrols-qmlplugins \
     qtquickcontrols2 \
     qtquickcontrols2-dev \
     qtquickcontrols2-mkspecs \
+    qtquickcontrols2-qmlplugins \
     qtdeclarative \
     qtdeclarative-dev \
+    qtdeclarative-plugins \
     qtdeclarative-mkspecs \
     qtdeclarative-tools \
     qtdeclarative-qmlplugins \
     qtgraphicaleffects \
     qtgraphicaleffects-dev \
     qtgraphicaleffects-qmlplugins \
+    qsiv \
     qtsensors \
     qtsensors-dev \
     qtsensors-mkspecs \

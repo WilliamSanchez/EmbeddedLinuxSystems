@@ -13,6 +13,8 @@ IMAGE_INSTALL:append = " fontconfig"
 
 INIT_MANAGER = "systemd"
 
+IMAGE_FEATURES += "dev-pkgs"
+
 DISTRO_FEATURES:remove = " x11 wayland"
 
 IMAGE_INSTALL:append = " qtbase packagegroup-qt5"

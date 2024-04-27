@@ -3,8 +3,16 @@ DESCRIPTION = "Recipe created by bitbake-layers"
 LICENSE = "CLOSED"
 
 DEPENDS += " qtbase packagegroup-qt5"
+DEPENDS += "qtbase \
+	qtdeclarative \
+	qtquickcontrols"
 
-SRC_URI = "file://myQTApp.cpp \
+SRC_URI = "file://mainwindow.h \
+	   file://mainwindow.cpp \
+           file://myQTApp.cpp \
+		   file://mainwindow.ui \
+		   file://qml.qrc \
+		   file://map.qml \
 	   file://myQTApp.pro \
 	   "
 
