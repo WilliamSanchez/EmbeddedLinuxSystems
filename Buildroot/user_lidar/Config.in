@@ -1,0 +1,4 @@
+config BR2_PACKAGE_USER_LIDAR
+	bool "User lidar to avoid obstacles"
+	help
+	  A service to measrement distance around to avoid obstacles

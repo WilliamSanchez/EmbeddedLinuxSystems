@@ -1,5 +1,5 @@
 CFLAGS=-Wall -g
-PROGS=helloworld
+PROGS=user_lidar
 
 all: $(PROGS)
 

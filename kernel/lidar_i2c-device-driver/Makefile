@@ -1,12 +1,13 @@
-obj-m += lidar_serial.o
+obj-m += lidar_i2c-device-driver.o
 
-KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/kernel/linux
+#KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/kernel/linux-stable
+KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/QEMU/buildroot/output/build/linux-6.5
 INSTALLDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/kernel/BB/nfsroot
 PWD := $(shell pwd)
 
 all:
 	make ARCH=arm CROSS_COMPILE=arm-cortex_a8-linux-gnueabihf- -C $(KDIR) M=$(PWD) modules
-	
+
 install:
 	make ARCH=arm CROSS_COMPILE=arm-cortex_a8-linux-gnueabihf- -C $(KDIR) M=$(PWD) INSTALL_MOD_PATH=$(INSTALLDIR) modules_install
 

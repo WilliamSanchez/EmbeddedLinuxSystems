@@ -1,4 +1,4 @@
-obj-m += helloworld_module.o
+obj-m += lidar_serial.o
 
 #KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/kernel/linux-stable
 KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/QEMU/buildroot/output/build/linux-6.5

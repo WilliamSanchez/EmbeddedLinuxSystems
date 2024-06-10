@@ -1,0 +1,1 @@
+savedcmd_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/modules.order := {   echo /home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.o; :; } > /home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/modules.order

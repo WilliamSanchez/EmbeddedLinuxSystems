@@ -15,20 +15,20 @@ static void lidar_remove(struct serdev_device *serdev);
 
 static struct of_device_id serdev_lidar_id[] = {
 	{
-		.compatible = "",
+		.compatible = "lidar,measure_distance",
 	},
 	{},
 };
-MODULE_DEVICE_TABLE(of,serdev_lidar_ids);
+MODULE_DEVICE_TABLE(of,serdev_lidar_id);
 
-static int serdev_device_driver lidar_driver = {
+static struct serdev_device_driver lidar_driver = {
 	.probe = lidar_probe,
 	.remove = lidar_remove,
-	.drive = {
-		.name = "LIDAR Drive"
-		.of_match_table = serdev_lidar_id
+	.driver = {
+		.name = "LIDAR Drive",
+		.of_match_table = serdev_lidar_id,
 	},
-}
+};
 
 static int serdev_lidar_recv(struct serdev_device *serdev, const unsigned char *buffer, size_t size){
 	printk("LIDAR echo - Received %ld bytes with \"%s\"n",size, buffer);
@@ -38,9 +38,9 @@ static int serdev_lidar_recv(struct serdev_device *serdev, const unsigned char *
 
 static const struct serdev_device_ops serdev_lidar_ops = {
 	.receive_buf = serdev_lidar_recv,
-}
+};
 
-static int serdev_lidar_probe(struct serdev_device *serdev){
+static int lidar_probe(struct serdev_device *serdev){
 	int status;
 	printk("LIDAR Now i am in the ŕobe function");
 	
@@ -53,7 +53,7 @@ static int serdev_lidar_probe(struct serdev_device *serdev){
 
 	serdev_device_set_baudrate(serdev,115200);
 	serdev_device_set_flow_control(serdev, false);
-	serdev-device_set_parity(serdev,SERDEV_PARITY_NONE);
+	serdev_device_set_parity(serdev,SERDEV_PARITY_NONE);
 	
 	status = serdev_device_write_buf(serdev, "LIDER INIT", sizeof("LIDAR INIT"));
 	printk("LIDAR - wrote: %d bytes.\n",status);
@@ -62,7 +62,7 @@ static int serdev_lidar_probe(struct serdev_device *serdev){
 
 }
 
-static void serdev_lidar_remove(struct serdev_device *serdev){
+static void lidar_remove(struct serdev_device *serdev){
 	printk("LIDAR removing driver!\n");
 	serdev_device_close(serdev);
 }
@@ -70,17 +70,19 @@ static void serdev_lidar_remove(struct serdev_device *serdev){
 
 static int __init lidar_init(void){
 	printk("LIDAR load driver!.\n");
-	if(serdev_device_driver_register(&serdev_lidar_driver)){
+	if(serdev_device_driver_register(&lidar_driver)){
 		printk("LIDAR could not load driver!.\n");
-		return -1
+		return -1;
 	}
+	return 0;
 }
 
 
 static void __exit lidar_exit(void){
 	printk("LIDAR unload driver!.");
-	serdev_device_driver_unregister(&serdev_lidar_driver);
+	serdev_device_driver_unregister(&lidar_driver);
 }
 
 module_init(lidar_init);
 module_exit(lidar_exit);
+
