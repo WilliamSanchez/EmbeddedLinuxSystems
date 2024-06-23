@@ -1,0 +1,4 @@
+config BR2_PACKAGE_USER_PWM
+	bool "User to set a server motor"
+	help
+	  configure a servo motor pwm

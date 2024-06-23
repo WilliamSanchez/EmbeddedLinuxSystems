@@ -25,22 +25,19 @@
 		>;
 	};
 	
-	/* P1_02 (ZCZ ball R5) gpio2_23 */
-	P1_02_default_pin: pinmux_P1_02_default_pin { pinctrl-single,pins = <
-		AM33XX_IOPAD(0x08e4, PIN_INPUT | MUX_MODE7) >; };			/* lcd_hsync.gpio2_23 */
-	P1_02_gpio_pin: pinmux_P1_02_gpio_pin { pinctrl-single,pins = <
-		AM33XX_IOPAD(0x08e4, PIN_OUTPUT | INPUT_EN | MUX_MODE7) >; };		/* lcd_hsync.gpio2_23 */
-	P1_02_gpio_pu_pin: pinmux_P1_02_gpio_pu_pin { pinctrl-single,pins = <
-		AM33XX_IOPAD(0x08e4, PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE7) >; };	/* lcd_hsync.gpio2_23 */
-	P1_02_gpio_pd_pin: pinmux_P1_02_gpio_pd_pin { pinctrl-single,pins = <
-		AM33XX_IOPAD(0x08e4, PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE7) >; };	/* lcd_hsync.gpio2_23 */
-	P1_02_gpio_input_pin: pinmux_P1_02_gpio_input_pin { pinctrl-single,pins = <
-		AM33XX_IOPAD(0x08e4, PIN_INPUT | MUX_MODE7) >; };			/* lcd_hsync.gpio2_23 */
-	P1_02_pruout_pin: pinmux_P1_02_pruout_pin { pinctrl-single,pins = <
-		AM33XX_IOPAD(0x08e4, PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE5) >; };	/* lcd_hsync.pru1_out9 */
-	P1_02_pruin_pin: pinmux_P1_02_pruin_pin { pinctrl-single,pins = <
-		AM33XX_IOPAD(0x08e4, PIN_INPUT | MUX_MODE6) >; };			/* lcd_hsync.pru1_in9 */
-
+    	ehrpwm1_pins: ehrpwm1_pins {
+        	pinctrl-single,pins = <
+            		AM33XX_IOPAD(0x848, PIN_OUTPUT | MUX_MODE6) /* P9.14, EHRPWM1A */
+            		AM33XX_IOPAD(0x84c, PIN_OUTPUT | MUX_MODE6) /* P9.16, EHRPWM1B */
+        	>;
+    	};
+    	
+    	ehrpwm2_pins: ehrpwm2_pins {
+        	pinctrl-single,pins = <
+            		AM33XX_IOPAD(0x820, PIN_OUTPUT | MUX_MODE4) /* P8.19, EHRPWM2A */
+            		AM33XX_IOPAD(0x824, PIN_OUTPUT | MUX_MODE4) /* P8.13, EHRPWM2B */
+     		>;
+     	};	
 };
 
 &i2c1 {
@@ -59,42 +56,25 @@
 	status = "okay";
 };
 
-&ocp {
-	/************************/
-	/* P1 Header */
-	/************************/
-
-	/* P1_01                VIN-AC */
-
-	/* P1_02 (ZCZ ball R5) gpio_input */
-	P1_02_pinmux {
-		compatible = "bone-pinmux-helper";
-		status = "okay";
-		pinctrl-names = "default", "gpio", "gpio_pu", "gpio_pd", "gpio_input", "pruout", "pruin";
-		pinctrl-0 = <&P1_02_default_pin>;
-		pinctrl-1 = <&P1_02_gpio_pin>;
-		pinctrl-2 = <&P1_02_gpio_pu_pin>;
-		pinctrl-3 = <&P1_02_gpio_pd_pin>;
-		pinctrl-4 = <&P1_02_gpio_input_pin>;
-		pinctrl-5 = <&P1_02_pruout_pin>;
-		pinctrl-6 = <&P1_02_pruin_pin>;
-	};
-	
-	cape-universal {
-		compatible = "gpio-of-helper";
-		status = "okay";
-		pinctrl-names = "default";
-		pinctrl-0 = <&P1_02_gpio_input_pin>;
-
-		P1_02 {
-			gpio-name = "P1_02";
-			gpio = <&gpio1 23 0>;
-			input;
-			dir-changeable;
-		};
-	};	
+&epwmss1 {
+	status = "okay";
 };
 
+&ehrpwm1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&ehrpwm1_pins>;
+};
+
+&epwmss2 {
+	status = "okay";
+};
+
+&ehrpwm2 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&ehrpwm2_pins>;
+};
 
 
 
