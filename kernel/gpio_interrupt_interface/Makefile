@@ -1,4 +1,4 @@
-obj-m += lidar_i2c-device-driver.o
+obj-m += gpio_irq_int.o
 
 #KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/kernel/linux-stable
 KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/QEMU/buildroot/output/build/linux-6.5

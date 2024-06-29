@@ -1,0 +1,4 @@
+config BR2_PACKAGE_USER_GPIO_IRQ_INTERFACE
+	bool "GPIO-IRQ_LED user space driver"
+	help
+	  A service to get interrupts from custom device driver

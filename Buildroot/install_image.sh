@@ -2,6 +2,7 @@
 
 file_root="/home/william/Documents/Embedded_Systems/Embedded_Linux/QEMU/buildroot/output/images/rootfs.tar"
 file_nfsroot="/home/william/Documents/Embedded_Systems/Embedded_Linux/kernel/BB/nfsroot/"
+file_services="/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/Buildroot/rootfs-overlay"
 
 echo "Install imagem"
 echo "file_root= $file_root"
@@ -12,3 +13,8 @@ sudo cp $file_root $file_nfsroot
 cd $file_nfsroot
 sudo tar -xvf "rootfs.tar" 
 sudo rm -rf "rootfs.tar"
+
+if [ $1 = "demons" ]; then
+  echo "Installing demonds"
+  sudo cp "$file_services"/S25modprobe "$file_services"/S99custom-service  "$file_nfsroot"/etc/init.d/
+fi

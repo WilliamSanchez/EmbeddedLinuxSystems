@@ -1,2 +1,3 @@
 #!/bin/sh
-modprobe helloworld_module
+#modprobe helloworld_module
+insmod /lib/modules/6.5.0/updates/gpio_irq_int.ko

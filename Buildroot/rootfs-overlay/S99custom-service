@@ -4,13 +4,15 @@ case "$1" in
 	start)
 
 		echo "Starting custom service"
-		start-stop-daemon -S -n customservice -a /usr/bin/customservice
+		#start-stop-daemon -S -n customservice -a /usr/bin/customservice
+		start-stop-daemon -S -n user_gpio-irq_interface -a /usr/bin/user_gpio-irq_interface
 		;;
 
 	stop)
 
 		echo "Stopping custom service"
-		start-stop-daemon -K -n customservice
+		#start-stop-daemon -K -n customservice
+		start-stop-daemon -K -n user_gpio-irq_interface
 		;;
 
 	*)

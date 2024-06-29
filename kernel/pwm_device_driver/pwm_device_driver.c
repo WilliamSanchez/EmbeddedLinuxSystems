@@ -1,150 +1,150 @@
+#include <linux/input.h>
 #include <linux/module.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
 #include <linux/pwm.h>
-#include <linux/version.h>
 
-
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("William Samchez");
-MODULE_DESCRIPTION("A PWM device driver to turn a motor server");
-
-#define DRIVER_NAME 	"pwd_device_driver"
-#define DRIVER_CLASS	"pwm_class"
-
-static dev_t my_device_nr;
-static struct class *pwmClass;
-static struct cdev pwmDevice;
-
-struct pwm_device *pwm0 = NULL;
-struct device *devicePWM = NULL;
-u32 pwm_on_time = 10000000;
-
-static ssize_t pwm_write(struct file *filep, const char *user_buffer, size_t count, loff_t *offs)
-{
-    int to_copy, not_copied, delta;
-    char value;
-    
-    /* Get amoint of data to copy */
-    to_copy = min(count, sizeof(value));
-    
-    /* Copy data to user */
-    not_copied = copy_from_user(&value, user_buffer, to_copy);
-    
-    /* Set PWM on time */
-    if(value < 'a' || value > 'j')
-    	printk("Invalid value\n");
-    else
-    	pwm_config(pwm0, 20000000*(value - 'a'), 20000000);
-    	
-    delta = to_copy - not_copied;
-    	
-    return delta;
-} 
-
-static int pwm_release(struct inode *device_file, struct file *instance)
-{
-  printk("Open pwm device driver");
-  return 0;
-}
-
-static int pwm_open(struct inode *device_file, struct file *instance)
-{
-  printk("Close pwm device driver");
-  return 0;
-}
-
-static struct file_operations pwmfops = {
-	.owner		= THIS_MODULE,
-	.open		= pwm_open,
-	.release	= pwm_release,
-	.write		= pwm_write
+struct pwm_servo_motor{
+   struct input_dev *input;
+   struct pwm_device *pwm;
+   struct work_struct work;
+   unsigned long period;
+   bool suspend;
 };
 
-static int __init ModuleInit(void)
+static int pwm_servo_motor_on(struct pwm_servo_motor *servo_motor, unsigned long period)
 {
-    printk("Initializing the module\n");
-    
-    /*  allocate a device nr */
-    if(alloc_chrdev_region(&my_device_nr, 0, 1, DRIVER_NAME) < 0)
-    {
-    	printk("Device can't be allocated\n");
-    	return -1;
-    }
-    
-    printk("PWM device Major: %d, Minor: %d was registered\n",my_device_nr>>20, my_device_nr && 0xfffff);
-    
-    /*	create device class	*/
-    #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,4,0)
-    	if((pwmClass=class_create(DRIVER_CLASS))== NULL)
-    #else
-    	if((pwmClass=class_create(THIS_MODULE,DRIVER_CLASS))== NULL)
-    #endif
-    {
-        printk("PWM Device class was not created witth success\n");
-        goto classError;
-    } 
-    
-    /* Create device file */
-    if(device_create(pwmClass, NULL, my_device_nr, NULL, DRIVER_NAME) == NULL)
-    {
-    	printk("Can not create device file!\n");
-    	goto fileError;
-    }
-    
-    /* Initialize device file  */
-    cdev_init(&pwmDevice, &pwmfops);
-    
-    /* Registering device to kernel */
-    if(cdev_add(&pwmDevice, my_device_nr, 1) == -1)
-    {
-    	printk("Registering of device to kernel failed!\n");
-    	goto addError;
-    }
-    
-    
-    pwm0 = pwm_get(devicePWM, "pwm-server_motor");
-    if(pwm0 == NULL)
-    {
-       printk("Cold not get PWM0!\n");
-       goto addError;
-    }
-    
-    pwm_config(pwm0, pwm_on_time, 20000000);
-    pwm_enable(pwm0);
-    
-    printk("PWM module initialized seccesful\n");
-    return 0;
-    
-    addError:
-    	device_destroy(pwmClass, my_device_nr);
-    fileError:
-    	class_destroy(pwmClass);    
-    classError:
-    	unregister_chrdev_region(my_device_nr,1);
-    return -1;
-
+   struct pwm_state state;
+   int error;
+  
+   state.enabled = true;
+   state.period = period;
+   
+   pwm_set_relative_duty_cycle(&state, 50, 100);
+  
+   error = pwm_apply_state(servo_motor->pwm, &state);
+   if(error)
+  	return error;
+  
+   return 0;
 }
 
-static void __exit ModuleExit(void){
-	pwm_disable(pwm0);
-	pwm_put(pwm0);
-	cdev_del(&pwmDevice);
-	device_destroy(pwmClass, my_device_nr);
-	class_destroy(pwmClass);
-	unregister_chrdev_region(my_device_nr,1);
-	printk("Exit PWM\n");
+static void pwm_servo_motor_off(struct pwm_servo_motor *servo_motor)
+{
+	pwm_disable(servo_motor->pwm);
 }
 
-module_init(ModuleInit);
-module_exit(ModuleExit);
+static void pwm_servo_motor_work(struct work_struct *work)
+{
+    struct pwm_servo_motor *servo_motor = container_of(work, struct pwm_servo_motor, work); 
+    unsigned long period = READ_ONCE(servo_motor->period);
+       
+    if(period)
+    	pwm_servo_motor_on(servo_motor, period);
+    else
+    	pwm_servo_motor_off(servo_motor);
+}
 
+static void pwm_servo_motor_stop(struct pwm_servo_motor *servo_motor)
+{
+   cancel_work_sync(&servo_motor->work);
+   pwm_servo_motor_off(servo_motor);
+}
 
+static int pwm_servo_motor_probe(struct platform_device *pdev)
+{
+   struct device *dev = &pdev->dev;	
+   struct pwm_servo_motor *servo_motor;
+   struct pwm_state state;
+   int error;
+  
+   servo_motor = devm_kzalloc(dev,sizeof(*servo_motor), GFP_KERNEL);
+   if(!servo_motor)
+   	return -ENOMEM;
+   
+   servo_motor->pwm = devm_pwm_get(dev,NULL);
+   if(IS_ERR(servo_motor->pwm))
+   {
+   	error=PTR_ERR(servo_motor->pwm);
+   	if(error != -EPROBE_DEFER)
+   		dev_err(dev,"Failed to apply initial PWM satte: %d\n",error);
+   	return error;
+   }
+  
+   /* Sync up PWM satte and ensure it is off  */
+   pwm_init_state(servo_motor->pwm, &state);
+   state.enabled = false;
+   error = pwm_apply_state(servo_motor->pwm, &state);
+   
+   if(error)
+   {
+   	dev_err(dev,"Failed to apply initial PWM state: %d\n", error);
+   	return error;
+   }
+   
+   INIT_WORK(&servo_motor->work, pwm_servo_motor_work);
+   
+   servo_motor->input = devm_input_allocate_device(dev);
+   if(!servo_motor->input)
+   {
+   	dev_err(dev, "Failed to allocate input device\n");
+   	return -ENOMEM;
+   }
+   
+   servo_motor->input->name = ("pwm_servo_motor");
+   
+   return 0;
+}
 
+static int __maybe_unused pwm_servo_motor_suspend(struct device *dev)
+{
+   struct pwm_servo_motor *servo_motor = dev_get_drvdata(dev);
+   
+   //spin_lock_irq(&servo_motor->input->event->lock);
+   servo_motor->suspend = true;
+   //spin_unlock_irq(&servo_motor->input->event->event_lock); 
 
+   pwm_servo_motor_stop(servo_motor);
 
+   return 0;
+}
 
+static int __maybe_unused pwm_servo_motor_resume(struct device *dev)
+{
+   struct pwm_servo_motor *servo_motor = dev_get_drvdata(dev);
+  
+   //spin_lock_irq(&servo_motor->input->event_lock);
+   servo_motor->suspend = false;
+   //spin_unlock_irq(&servo_motor->input->event_lock);
+  
+   schedule_work(&servo_motor->work);
+  
+   return 0;
+}
 
+static SIMPLE_DEV_PM_OPS(pwm_servo_motor_pm_ops, pwm_servo_motor_suspend, pwm_servo_motor_resume);
 
+#ifdef CONFIG_OF
+	static const struct of_device_id pwm_servo_motor_match[] = {
+		{.compatible = "pwm-servo_motor"},
+		{},
+	};
+MODULE_DEVICE_TABLE(of, pwm_servo_motor_match);
+#endif
+
+static struct platform_driver pwm_servo_motor = {
+	.probe = pwm_servo_motor_probe,
+	.driver = {
+		.name 	= "pwm-servo_motor",
+		.pm 	= &pwm_servo_motor_pm_ops,
+		.of_match_table = of_match_ptr(pwm_servo_motor_match),
+	},
+};
+
+module_platform_driver(pwm_servo_motor);
+
+MODULE_AUTHOR("William Sanchez");
+MODULE_DESCRIPTION("PWM, Servo Motor");
+MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:pwm-servo_motor");
