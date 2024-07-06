@@ -12,7 +12,7 @@ case "$1" in
 
 		echo "Stopping custom service"
 		#start-stop-daemon -K -n customservice
-		start-stop-daemon -K -n user_gpio-irq_interface
+		start-stop-daemon -K -n /usr/bin/user_gpio-irq_interface
 		;;
 
 	*)

@@ -14,7 +14,7 @@ cd $file_nfsroot
 sudo tar -xvf "rootfs.tar" 
 sudo rm -rf "rootfs.tar"
 
-if [ $1 = "demons" ]; then
+if [[ $1 = "demons" ]]; then
   echo "Installing demonds"
   sudo cp "$file_services"/S25modprobe "$file_services"/S99custom-service  "$file_nfsroot"/etc/init.d/
 fi

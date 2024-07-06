@@ -10,37 +10,39 @@
 	model = "TI AM335x BeagleBone";
 	compatible = "ti,am335x-bone", "ti,am33xx";
 	
-	leds {
-		pinctrl-names = "default";
-		pinctrl-0 = <&user_leds_default>;
-		compatible = "Wgpio-leds";
-		
-		wled0{
-			label = "wled:Wled0";
-			gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
-			default-satate = "on";		
-		};	
+	pwm_servo {
+		compatible	= "servo_motor,w_pwm_servo_motor";
+		pwms 		= <&ehrpwm1 0 20000000 0>;
+		pwm-names 	= "pwm_servo_motor";
+		pinctrl-names	= "default";
+		//pinctrl-0	= <&ehrpwm1_pins>;
+		enabled		= <0>;
+		duty		= <0>;
+		status = "okay";				
 	};
 	
-	button_keys: button_keys@0 {
-	compatible = "button, input-button";
-	#address-cells = <1>;
-  	#size-cells = <0>;		
-		switch@1{
-			label="button0";
-			linux,code = <0x100>;
-			gpios = <&gpio2 3 GPIO_ACTIVE_LOW>;
-			interrupt-extended = <&gpio2 3 (IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_EDGE_RISING)>;
-			interrupt-names = "W_IRQ";
-			status = "okay";
-		};
+	custom_gpio {
+		pinctrl-names = "default";
+		pinctrl-0 = <&user_irq_led_default>;
+		compatible = "button, input-button";
+		
+		led-gpios=<&gpio2 3 GPIO_ACTIVE_HIGH>;
+		sw-gpios=<&gpio2 2 GPIO_ACTIVE_LOW>;
+		
 	};
 };
 
 &am33xx_pinmux {
 
 	pinctrl-name = "default";
-	pinctrl-0 = <&button_keys_s0>;
+	//pinctrl-0 = <&user_irq_led_default>;
+	
+	user_irq_led_default: user_irq_led_default {
+     		pinctrl-single,pins = <
+     			AM33XX_IOPAD(0x890,PIN_INPUT_PULLDOWN | MUX_MODE7)	/* gpmc_adv_ale.gpio2_2		P8_7*/
+     			AM33XX_IOPAD(0x894,PIN_OUTPUT_PULLDOWN | MUX_MODE7) 	/* gpmc_oen_ren.gpio2_3 	P8_8*/
+     		>;     	
+     	};
 
 	i2c1_pins: i2c1-pins {
 		pinctrl-single,pins = <
@@ -75,15 +77,6 @@
      			AM33XX_IOPAD(0x810,PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* gpmc_ad4.gpio1_4 		P8_23*/
      		>;
      	
-     	};
-     	
-     	button_keys_s0: button_keys_s0 {
-     		pinctrl-single,pins = <
-			AM33XX_IOPAD(0x894,PIN_INPUT_PULLDOWN | MUX_MODE7) 	/* gpmc_oen_ren.gpio2_3 	P8_8*/
-			//0x90 (PIN_INPUT_PULLDOWN | MUX_MODE7)	/* gpmc_advn_ale.gpio2_2 */
-			//0x70 (PIN_INPUT_PULLDOWN | MUX_MODE7)	/* gpmc_wait0.gpio0_30 */
-			//0x9c (PIN_INPUT_PULLDOWN | MUX_MODE7)	/* gpmc_ben0_cle.gpio2_5 */
-		>;
      	};
 };
 
