@@ -6,6 +6,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <sys/ioctl.h>
+
+#define PWM_MOTOR_ON _IOW('a','a',int32_t*)
+#define PWM_MOTOR_OFF _IOW('a','a',int32_t*)
+
+#define SERVO_PWM_PERIOD  	20000000
+#define SERVO_MAX_DUTY  	 2500000
+#define SERVO_MIN_DUTY		  550000
 
 uint8_t read_buf[1024];
 
@@ -13,7 +21,7 @@ int main()
 {
    int fd, cont =0;
    
-   fd = open("/dev/pwd_device_driver",O_RDWR);
+   fd = open("/dev/w_pwm_motor",O_RDWR);
    
    if(fd < 0)
    {
@@ -21,7 +29,12 @@ int main()
          return -1;
    }
    
+   unsigned long duty_cycle = (SERVO_MAX_DUTY-SERVO_MIN_DUTY)/2;
+   
+   ioctl(fd, PWM_MOTOR_ON, (int32_t *)&duty_cycle);
+   
    while(1){
+   /*
     	write(fd, 'j', 1);
    	sleep(5);
  	write(fd, 'b', 1);
@@ -40,7 +53,7 @@ int main()
    	sleep(5);
  	write(fd, 'f', 1);
    	sleep(10);
- 	write(fd, 'a', 1);
+ 	write(fd, 'a', 1);*/
    	sleep(5);
    }
    close(fd);

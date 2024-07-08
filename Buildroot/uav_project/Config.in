@@ -1,0 +1,4 @@
+config BR2_PACKAGE_UAV_PROJECT
+	bool "Special project UAV"
+	help
+	  target to build a control, navigationa an guide project for an UAV
