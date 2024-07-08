@@ -1,0 +1,1 @@
+wisafa -1 users -1 =1@wisafa@ /home/wisafa /bin/sh - Especial User
