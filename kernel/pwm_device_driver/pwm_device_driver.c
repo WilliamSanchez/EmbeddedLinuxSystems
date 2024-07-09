@@ -12,7 +12,8 @@
 #define DEVICE_NAME "w_pwm_motor"
 
 #define PWM_MOTOR_ON _IOW('a','a',int32_t*)
-#define PWM_MOTOR_OFF _IOW('a','a',int32_t*)
+#define PWM_MOTOR_OFF _IOW('a','b',int32_t*)
+#define PWM_MOTOR_SET_DUTYCYCLE _IOW('a','c',int32_t*)
 
 #define SERVO_PWM_PERIOD  	20000000
 #define SERVO_MAX_DUTY  	 2500000
@@ -34,10 +35,11 @@ static int servo_pwm_motor_on(struct pwm_device *pwm_motor, unsigned int duty_cy
       int error;
       
       pr_info("Turn on PWM servo motor\n");
-      
+#if IS_ENABLED(CONFIG_PWM)    
       pwm_get_state(pwm_motor, &state);
-      pwm_set_duty_cycle(pwm_motor,1000000);
-      state.enabled = true;               
+      //pwm_set_duty_cycle(pwm_motor,1000000);
+      state.enabled = true;   
+      state.duty_cycle = duty_cycle;              
       error = pwm_apply_state(pwm_motor,&state);
       if(error)
       {
@@ -46,7 +48,32 @@ static int servo_pwm_motor_on(struct pwm_device *pwm_motor, unsigned int duty_cy
       }
       
       pr_info("%d Period %d duty_cicle %d Enable %d",error, (int)state.period,(int)state.duty_cycle, state.enabled);
+#else
+ 	pr_err("CONFIG_OF not defined\n");
+#endif      
+      return 0; 
+}
+
+static int servo_pwm_motor_set_DutyCycle(struct pwm_device *pwm_motor, unsigned int duty_cycle)
+{
+      struct pwm_state state;
+      int error;
       
+      pr_info("Turn on PWM servo motor\n");
+#if IS_ENABLED(CONFIG_PWM)    
+      pwm_get_state(pwm_motor, &state);
+      state.duty_cycle = duty_cycle;              
+      error = pwm_apply_state(pwm_motor,&state);
+      if(error)
+      {
+      	pr_err("Fail to turn on pwm servo\n");
+      	return error;
+      }
+      
+      pr_info("%d Period %d duty_cicle %d Enable %d",error, (int)state.period,(int)state.duty_cycle, state.enabled);
+#else
+ 	pr_err("CONFIG_OF not defined\n");
+#endif      
       return 0; 
 }
 
@@ -56,15 +83,24 @@ static int pwm_servo_open(struct inode *device_file, struct file *instance) {
 }
 
 static long pwm_servo_ioctl(struct file *fp,  unsigned int cmd, unsigned long arg) {
-	 int32_t value = 0; 
+	 int32_t data = 0; 
          switch(cmd) {
-                case PWM_MOTOR_ON:
-                        if( copy_from_user(&value ,(int32_t*) arg, sizeof(value)) )
+                case PWM_MOTOR_ON:                
+                        if( copy_from_user(&data ,(int32_t*) arg, sizeof(data)) )
                               pr_err("Data Write : Err!\n");
                        
-                        servo_pwm_motor_on(servo_motor->pwm, 1500000);
-                        pr_info("Value = %d\n", value);
+                        servo_pwm_motor_on(servo_motor->pwm, data);
+                        pr_info("Value = %d\n", data);
                         break;
+                
+                case PWM_MOTOR_SET_DUTYCYCLE:
+                        if( copy_from_user(&data ,(int32_t*) arg, sizeof(data)) )
+                              pr_err("Data Write : Err!\n");
+                       
+                        servo_pwm_motor_set_DutyCycle(servo_motor->pwm, data);
+                        pr_info("DutyCycle Value = %d\n", data);
+                        break;
+                
                 default:
                         pr_info("Default\n");
          }  
@@ -136,13 +172,13 @@ static int pwm_servo_motor_probe(struct platform_device *pdev)
    	dev_err(dev,"Failed to apply initial PWM state: %d\n", error);
    	return error;
    }
-   
+   /*
    error = pwm_config(servo_motor->pwm, 700000, 20000000); 
    if(error)
    {
    	dev_err(dev,"Failed to config PWM: %d\n", error);
    	return error;
-   }
+   }*/
     platform_set_drvdata(pdev,servo_motor);
     pr_info("Finish initialization servo device driver\n");
    
