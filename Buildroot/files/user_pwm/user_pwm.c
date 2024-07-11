@@ -13,8 +13,8 @@
 #define PWM_MOTOR_SET_DUTYCYCLE _IOW('a','c',int32_t*)
 
 #define SERVO_PWM_PERIOD  	20000000
-#define SERVO_MAX_DUTY  	 2500000
-#define SERVO_MIN_DUTY		  550000
+#define SERVO_MAX_DUTY  	 2550000
+#define SERVO_MIN_DUTY		  500000
 
 uint8_t read_buf[1024];
 
