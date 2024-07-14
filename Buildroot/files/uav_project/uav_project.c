@@ -10,13 +10,27 @@
 #include <semaphore.h>
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 #include "dqData.h"
+
+
+#define PWM_MOTOR_ON _IOW('a','a',int32_t*)
+#define PWM_MOTOR_OFF _IOW('a','b',int32_t*)
+#define PWM_MOTOR_SET_DUTYCYCLE _IOW('a','c',int32_t*)
+
+#define SERVO_PWM_PERIOD  	20000000
+#define SERVO_MAX_DUTY  	 2550000
+#define SERVO_MIN_DUTY		  500000
+#define SERVO_DEGREE ((SERVO_MAX_DUTY-SERVO_MIN_DUTY)/180)
+#define DEGREE_90 ((SERVO_MAX_DUTY+SERVO_MIN_DUTY)/2)
 
 #define NUM_THREADS (3)
 #define USER_PER_MSEC (1000)
@@ -39,7 +53,7 @@
 
 struct dqData _getData;
 
- char buf[BUF_SIZE] = "Hola\n";
+char buf[BUF_SIZE] = "Hola\n";
  
 int abortTest = 0;
 double start_time;
@@ -66,15 +80,49 @@ struct sockaddr_in server_addr_out, client_addr_out;
 struct hostent *host_out;
 
 int numBytes_out;
+static unsigned long duty_cycle = 0; 
+static int fd;
+/*********************************************
+*********************************************/
+
+/*********************************************
+*********************************************/
+
+int config_servo_pwm()
+{
+
+   fd = open("/dev/w_pwm_motor",O_RDWR);   
+   if(fd < 0)
+   {
+   	 printf("Cannot open device file...\n");
+         return -1;
+   } 
+   duty_cycle = DEGREE_90; 
+   ioctl(fd, PWM_MOTOR_ON, (int32_t *)&duty_cycle);
+   return 0;
+}
+
+/*********************************************
+*********************************************/
+
+int set_servo_pwm(float angle)
+{
+
+   duty_cycle = (DEGREE_90+SERVO_DEGREE*angle); 
+   ioctl(fd, PWM_MOTOR_SET_DUTYCYCLE, (int32_t *)&duty_cycle);
+   
+   return 0;
+}
+
+/*********************************************
+*********************************************/
 
 /*********************************************
 *********************************************/
 
 void init_sendData()
 {
-   
-
-   
+      
 //   host_out = (struct hostnet*)gethostname((char*)"192.168.7.2");   
    if((sock_out = socket(AF_INET,SOCK_DGRAM,0)) == -1)
    {
@@ -147,7 +195,7 @@ void init_getData()
    
        // print where it got the UDP data from and the raw data
     printf("\nFG (%s,%d)said:",inet_ntoa(client_addr_in.sin_addr),ntohs(client_addr_in.sin_port));
-    printf("DATA: \n\r%s/n/r",rcv_data);
+    printf("DATA: \n\r%s",rcv_data);
     
         sscanf(rcv_data,"%f%f%f%f%f%f%f%f%f%f%f",
 	&_getData.latitude,&fdmData[LONGITUDE],&fdmData[ALTITUDE],
@@ -271,16 +319,17 @@ void *funcCTL(void *threadp)
        	release++;
        	
        	cpucore = sched_getcpu();
-       	printf("funcCTL start %d @ %lf on core %d\n",release,(event_time=getTimeMsec()-start_time),limit);
-       	
+       	printf("funcCTL start %d @ %lf on core %d\n",release,(event_time=getTimeMsec()-start_time),limit); 	
        	do
        	{
                if(sendto(sock_out,txr_data,strlen(txr_data),0,(struct sockaddr*)&client_addr_out,sizeof(struct sockaddr_in))!=numBytes_out)
-               {
                   perror("sendto");
-               }else{
+               else
                   printf("Send data Success\n");
-               }
+                  
+                  set_servo_pwm(_getData.pitch_rate);
+                  printf("Apply data OK\n");
+               
        	}while(limit != 0);
        	
         printf("funcCTL complete %d @ %lf, %d loops\n",release,(event_time=getTimeMsec()-start_time),limit);
@@ -456,7 +505,7 @@ int main()
   
 //  threadParams[0].majorPeriods=300;
 threadParams[0].majorPeriods=0;
-  
+  config_servo_pwm();
   rc = pthread_create(&threads[1],&rt_sched_attr[1]/*(void*)0*/,funcCTL,(void*)&(threadParams[1]));
   rc = pthread_create(&threads[2],&rt_sched_attr[2]/*(void*)0*/,funcNAV,(void*)&(threadParams[2]));
   
