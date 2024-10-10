@@ -1,10 +1,16 @@
 CFLAGS=-Wall -g
 PROGS=helloworld
 
-all: $(PROGS)
+all: libcustom.a $(PROGS)
 
-$(PROGS): $(PROGS).c
-	$(CC) $(CFLAGS) -o $@ $^
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+libcustom.a : lib.h fred.o bill.o
+	ar -rs libcustom.a fred.o bill.o
+
+$(PROGS): $(PROGS).c libcustom.a
+	$(CC) $(CFLAGS) -o $(PROGS) $(PROGS).c -I. -L. -lcustom
 
 clean:
 	rm -f *.o

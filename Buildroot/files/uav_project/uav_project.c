@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <syslog.h>
 
 #include "dqData.h"
 
@@ -49,7 +50,8 @@
 
 #define BUF_SIZE 10
 #define PORT_NUM_QGC 4500
-#define PORT_NUM_FG  5500
+#define PORT_NUM_FG_OUT  5500
+#define PORT_NUM_FG_IN  5501
 
 struct dqData _getData;
 
@@ -77,28 +79,63 @@ int send_len;
    
 struct sockaddr_in server_addr_in, client_addr_in;
 struct sockaddr_in server_addr_out, client_addr_out;
+struct sockaddr_in fgAddr;
 struct hostent *host_out;
 
 int numBytes_out;
 static unsigned long duty_cycle = 0; 
-static int fd;
+static int fd_pwm, fd_uc;
+
+struct controlFG {
+    double rudder;
+    double elevator;
+    double aileron;
+    double throttle;
+}__attribute__((packed));
+
 /*********************************************
 *********************************************/
 
+union temp64{
+  int64_t ll;
+  int32_t l[2];
+};
+
+void swap64(void *p)
+{
+     union temp64 *f, t;
+     f = (union temp64 *)p;
+     t.l[0] = htonl(f->l[1]);
+     t.l[1] = htonl(f->l[0]);
+     
+     f->ll = t.ll;
+}
 /*********************************************
 *********************************************/
 
 int config_servo_pwm()
 {
 
-   fd = open("/dev/w_pwm_motor",O_RDWR);   
-   if(fd < 0)
+   fd_pwm = open("/dev/w_pwm_motor",O_RDWR);   
+   if(fd_pwm < 0)
    {
-   	 printf("Cannot open device file...\n");
+   	 printf("Cannot open device file w_pwm_moto...\n");
          return -1;
    } 
    duty_cycle = DEGREE_90; 
-   ioctl(fd, PWM_MOTOR_ON, (int32_t *)&duty_cycle);
+   ioctl(fd_pwm, PWM_MOTOR_ON, (int32_t *)&duty_cycle);
+   return 0;
+}
+
+int config_microcontroller()
+{
+
+   fd_uc = open("/dev/serial_micro_to_pc",O_RDWR);   
+   if(fd_uc < 0)
+   {
+   	 printf("Cannot open device file serial_micro_to_pc...\n");
+         return -1;
+   } 
    return 0;
 }
 
@@ -109,7 +146,7 @@ int set_servo_pwm(float angle)
 {
 
    duty_cycle = (DEGREE_90+SERVO_DEGREE*angle); 
-   ioctl(fd, PWM_MOTOR_SET_DUTYCYCLE, (int32_t *)&duty_cycle);
+   ioctl(fd_pwm, PWM_MOTOR_SET_DUTYCYCLE, (int32_t *)&duty_cycle);
    
    return 0;
 }
@@ -133,7 +170,7 @@ void init_sendData()
    memset(&server_addr_out, 0, sizeof(struct sockaddr_in));
    server_addr_out.sin_family = AF_INET;
    server_addr_out.sin_port = htons(PORT_NUM_QGC);
-   server_addr_out.sin_addr.s_addr = INADDR_ANY;//inet_addr("192.168.7.2");//
+   server_addr_out.sin_addr.s_addr = INADDR_ANY;//inet_addr("192.168.1.1");//
 //   bzero(&(server_addr_out.sin_zero),8);
    
    if(bind(sock_out,(struct sockaddr *)&server_addr_out, sizeof(struct sockaddr_in)) == -1)
@@ -175,9 +212,14 @@ void init_getData()
    }
    
    server_addr_in.sin_family = AF_INET;
-   server_addr_in.sin_port = htons(PORT_NUM_FG);
+   server_addr_in.sin_port = htons(PORT_NUM_FG_OUT);
    server_addr_in.sin_addr.s_addr = INADDR_ANY; //inet_addr("192.168.7.2");//
    bzero(&(server_addr_in.sin_zero),8);
+   
+   fgAddr.sin_family = AF_INET;
+   fgAddr.sin_port = htons(PORT_NUM_FG_IN);
+   fgAddr.sin_addr.s_addr = inet_addr("192.168.1.1");//INADDR_ANY; //
+   //bzero(&(fgAddr.sin_zero),8);
    
    if(bind(sock_in,(struct sockaddr *)&server_addr_in, sizeof(struct sockaddr)) == -1)
    {
@@ -241,6 +283,7 @@ void *funcNAV(void *threadp)
     int limit=0, release=0, cpucore, i;
     threadParams_t *threadParams=(threadParams_t*)threadp;
     unsigned int requred_test_cycles = 200;
+    numBytes_out = strlen(buf);
     
     while(!abortTest)
     {
@@ -261,7 +304,8 @@ void *funcNAV(void *threadp)
               rcv_data[bytes_read] = '\0';
    
               // print where it got the UDP data from and the raw data
-              printf("\n(%s,%d)said:",inet_ntoa(client_addr_in.sin_addr),ntohs(client_addr_in.sin_port));
+              //printf("\n(%s,%d)said:",inet_ntoa(client_addr_in.sin_addr),ntohs(client_addr_in.sin_port));
+              syslog(LOG_INFO,"\n(%s,%d)said:",inet_ntoa(client_addr_in.sin_addr),ntohs(client_addr_in.sin_port));
 //              printf("DATA: %s/n/r",rcv_data);
 
     //parse UDP data and store into float array
@@ -285,6 +329,16 @@ void *funcNAV(void *threadp)
 	_getData.airspeed,_getData.heading,
 	_getData.x_accel,_getData.y_accel,_getData.z_accel,
 	_getData.roll_rate,_getData.pitch_rate,_getData.yaw_rate);
+	
+	
+        if(sendto(sock_out,txr_data,strlen(txr_data),0,(struct sockaddr*)&client_addr_out,sizeof(struct sockaddr_in))!=numBytes_out)
+              perror("sendto");
+        else
+             syslog(LOG_INFO,"Send data Success\n");//printf("Send data Success\n");
+                  
+        set_servo_pwm(_getData.pitch_rate);
+        syslog(LOG_INFO,"Apply data OK\n");//printf("Apply data OK\n");
+          
 
        	}while(limit != 0);
        	
@@ -302,12 +356,18 @@ void *funcNAV(void *threadp)
 void *funcCTL(void *threadp)
 {
     double event_time, run_time=0.0;
+    double cont = 0.0;
+    struct controlFG cdata;
     int limit=0, release=0, cpucore, i;
     threadParams_t *threadParams=(threadParams_t*)threadp;
-    unsigned int requred_test_cycles = 100;
+    unsigned int _elevator = 0;
+    unsigned int _aileron = 0;
+    unsigned int _throttle = 0;
+    unsigned int _rudder = 0;
     
-//    char buf[10] = "Hola\n";
-      numBytes_out = strlen(buf); 
+    char buf_send[10] = "Hola\n";
+//      numBytes_out = strlen(buf);
+      char data_to_uc[1024]; 
     
     while(!abortTest)
     {
@@ -319,20 +379,42 @@ void *funcCTL(void *threadp)
        	release++;
        	
        	cpucore = sched_getcpu();
-       	printf("funcCTL start %d @ %lf on core %d\n",release,(event_time=getTimeMsec()-start_time),limit); 	
+       	syslog(LOG_INFO,"funcCTL start %d @ %lf on core %d\n",release,(event_time=getTimeMsec()-start_time),limit); 	
        	do
        	{
-               if(sendto(sock_out,txr_data,strlen(txr_data),0,(struct sockaddr*)&client_addr_out,sizeof(struct sockaddr_in))!=numBytes_out)
-                  perror("sendto");
-               else
-                  printf("Send data Success\n");
-                  
-                  set_servo_pwm(_getData.pitch_rate);
-                  printf("Apply data OK\n");
-               
+       	
+       	    read(fd_uc, data_to_uc, 32);
+       	    printf("Data from microcontroller %s\n\r",data_to_uc);
+       // 	ELEVATOR 	\ 	AILERON 	\ 	RUDDER 	\ 	THROTTLE
+      sscanf(data_to_uc,"%d %d %d %d",&_elevator,&_aileron,&_rudder,&_throttle);
+       	
+      printf("Elevator %d, Aileron %d, Rudder %d,Throttle %d\n\t", _elevator, _aileron, _rudder, _throttle);
+       	    
+      cdata.aileron = 2*(3300 - (double)_aileron)/3300-1;
+      cdata.rudder = 2*(3300 - (double)_rudder)/3300-1;
+      cdata.throttle = (double)_throttle/255;
+      cdata.elevator = 2*(3300 - (double)_elevator)/3300-1;
+      
+      printf("Send data control Elevator %03f, Aileron %03f, Rudder %03f, Throttle %03f\n\t",cdata.elevator, cdata.aileron, cdata.rudder, cdata.throttle);
+      
+      swap64(&cdata.aileron);
+      swap64(&cdata.rudder);
+      swap64(&cdata.throttle);
+      swap64(&cdata.elevator);
+       	    
+       	    if(sendto(sock_in,&cdata,sizeof(cdata),0,(struct sockaddr*)&fgAddr,sizeof(struct sockaddr_in)) < 0)
+       	          printf("Erro to send control data\n");
+              
+             syslog(LOG_INFO,"Send data control Success\n");//printf("Send data Success\n");
+       	    cont++;
+       	    if (cont >=200)
+       	         cont = 0;
+       	         
+       	    printf("Apply data OK %lu\n", sizeof(cdata));
+          
        	}while(limit != 0);
        	
-        printf("funcCTL complete %d @ %lf, %d loops\n",release,(event_time=getTimeMsec()-start_time),limit);
+        syslog(LOG_INFO,"funcCTL complete %d @ %lf, %d loops\n",release,(event_time=getTimeMsec()-start_time),limit);
         limit=0;    
     }
     
@@ -506,6 +588,8 @@ int main()
 //  threadParams[0].majorPeriods=300;
 threadParams[0].majorPeriods=0;
   config_servo_pwm();
+  config_microcontroller();
+  
   rc = pthread_create(&threads[1],&rt_sched_attr[1]/*(void*)0*/,funcCTL,(void*)&(threadParams[1]));
   rc = pthread_create(&threads[2],&rt_sched_attr[2]/*(void*)0*/,funcNAV,(void*)&(threadParams[2]));
   

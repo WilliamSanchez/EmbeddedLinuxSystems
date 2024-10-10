@@ -99,8 +99,11 @@
 &uart1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart1_pins>;
-
 	status = "okay";
+	
+	serialuc: comm_uc{
+		compatible = "serialuc,microcontroller";
+	};
 };
 
 &epwmss1 {

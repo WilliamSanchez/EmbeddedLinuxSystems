@@ -1,8 +1,8 @@
-savedcmd_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.o := arm-cortex_a8-linux-gnueabihf-gcc -Wp,-MMD,/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/.lidar_serial.o.d -nostdinc -I./arch/arm/include -I./arch/arm/include/generated  -I./include -I./arch/arm/include/uapi -I./arch/arm/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -mlittle-endian -D__LINUX_ARM_ARCH__=6 -fmacro-prefix-map=./= -std=gnu11 -fshort-wchar -funsigned-char -fno-common -fno-PIE -fno-strict-aliasing -Wall -Wundef -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Werror=strict-prototypes -Wno-format-security -Wno-trigraphs -fno-dwarf2-cfi-asm -mno-fdpic -fno-ipa-sra -mabi=aapcs-linux -mfpu=vfp -funwind-tables -marm -Wa,-mno-warn-deprecated -march=armv6k -mtune=arm1136j-s -msoft-float -Uarm -fno-delete-null-pointer-checks -Wno-frame-address -Wno-format-truncation -Wno-format-overflow -Wno-address-of-packed-member -O2 -fno-allow-store-data-races -Wframe-larger-than=1024 -fstack-protector-strong -Wno-main -Wno-unused-but-set-variable -Wno-unused-const-variable -fomit-frame-pointer -fno-stack-clash-protection -Wvla -Wno-pointer-sign -Wcast-function-type -Wno-stringop-truncation -Wno-stringop-overflow -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-alloc-size-larger-than -Wimplicit-fallthrough=5 -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wno-packed-not-aligned -gsplit-dwarf -g -gdwarf-4  -DMODULE  -DKBUILD_BASENAME='"lidar_serial"' -DKBUILD_MODNAME='"lidar_serial"' -D__KBUILD_MODNAME=kmod_lidar_serial -c -o /home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.o /home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.c  
+savedcmd_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.o := arm-cortex_a8-linux-gnueabihf-gcc -Wp,-MMD,/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/.lidar_serial.o.d -nostdinc -I./arch/arm/include -I./arch/arm/include/generated  -I./include -I./arch/arm/include/uapi -I./arch/arm/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -mlittle-endian -D__LINUX_ARM_ARCH__=6 -fmacro-prefix-map=./= -std=gnu11 -fshort-wchar -funsigned-char -fno-common -fno-PIE -fno-strict-aliasing -Wall -Wundef -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Werror=strict-prototypes -Wno-format-security -Wno-trigraphs -fno-dwarf2-cfi-asm -mno-fdpic -fno-ipa-sra -mabi=aapcs-linux -mfpu=vfp -funwind-tables -marm -Wa,-mno-warn-deprecated -march=armv6k -mtune=arm1136j-s -msoft-float -Uarm -fno-delete-null-pointer-checks -Wno-frame-address -Wno-format-truncation -Wno-format-overflow -Wno-address-of-packed-member -O2 -fno-allow-store-data-races -Wframe-larger-than=1024 -fstack-protector-strong -Wno-main -Wno-unused-but-set-variable -Wno-unused-const-variable -fomit-frame-pointer -fno-stack-clash-protection -Wvla -Wno-pointer-sign -Wcast-function-type -Wno-stringop-truncation -Wno-stringop-overflow -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-alloc-size-larger-than -Wimplicit-fallthrough=5 -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wno-packed-not-aligned -gsplit-dwarf -g -gdwarf-4  -DMODULE  -DKBUILD_BASENAME='"lidar_serial"' -DKBUILD_MODNAME='"lidar_serial"' -D__KBUILD_MODNAME=kmod_lidar_serial -c -o /home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.o /home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.c  
 
-source_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.o := /home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.c
+source_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.o := /home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.c
 
-deps_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.o := \
+deps_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.o := \
   include/linux/compiler-version.h \
     $(wildcard include/config/CC_VERSION_TEXT) \
   include/linux/kconfig.h \
@@ -887,7 +887,107 @@ deps_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystem
     $(wildcard include/config/OF_KOBJ) \
     $(wildcard include/config/OF_NUMA) \
     $(wildcard include/config/OF_OVERLAY) \
+  include/linux/fs.h \
+    $(wildcard include/config/READ_ONLY_THP_FOR_FS) \
+    $(wildcard include/config/FS_POSIX_ACL) \
+    $(wildcard include/config/CGROUP_WRITEBACK) \
+    $(wildcard include/config/IMA) \
+    $(wildcard include/config/FILE_LOCKING) \
+    $(wildcard include/config/FSNOTIFY) \
+    $(wildcard include/config/FS_ENCRYPTION) \
+    $(wildcard include/config/FS_VERITY) \
+    $(wildcard include/config/EPOLL) \
+    $(wildcard include/config/UNICODE) \
+    $(wildcard include/config/QUOTA) \
+    $(wildcard include/config/FS_DAX) \
+    $(wildcard include/config/BLOCK) \
+  include/linux/wait_bit.h \
+  include/linux/kdev_t.h \
+  include/uapi/linux/kdev_t.h \
+  include/linux/dcache.h \
+  include/linux/rculist_bl.h \
+  include/linux/list_bl.h \
+  include/linux/bit_spinlock.h \
+  include/linux/lockref.h \
+    $(wildcard include/config/ARCH_USE_CMPXCHG_LOCKREF) \
+  include/linux/stringhash.h \
+    $(wildcard include/config/DCACHE_WORD_ACCESS) \
+  include/linux/hash.h \
+    $(wildcard include/config/HAVE_ARCH_HASH) \
+  include/linux/path.h \
+  include/linux/list_lru.h \
+    $(wildcard include/config/MEMCG_KMEM) \
+  include/linux/shrinker.h \
+    $(wildcard include/config/SHRINKER_DEBUG) \
+  include/linux/capability.h \
+  include/uapi/linux/capability.h \
+  include/linux/semaphore.h \
+  include/linux/fcntl.h \
+    $(wildcard include/config/ARCH_32BIT_OFF_T) \
+  include/uapi/linux/fcntl.h \
+  arch/arm/include/uapi/asm/fcntl.h \
+  include/uapi/asm-generic/fcntl.h \
+  include/uapi/linux/openat2.h \
+  include/linux/migrate_mode.h \
+  include/linux/percpu-rwsem.h \
+  include/linux/rcuwait.h \
+  include/linux/sched/signal.h \
+    $(wildcard include/config/SCHED_AUTOGROUP) \
+    $(wildcard include/config/BSD_PROCESS_ACCT) \
+    $(wildcard include/config/TASKSTATS) \
+    $(wildcard include/config/STACK_GROWSUP) \
+  include/linux/signal.h \
+    $(wildcard include/config/DYNAMIC_SIGFRAME) \
+    $(wildcard include/config/PROC_FS) \
+  include/linux/sched/jobctl.h \
+  include/linux/sched/task.h \
+    $(wildcard include/config/HAVE_EXIT_THREAD) \
+    $(wildcard include/config/ARCH_WANTS_DYNAMIC_TASK_STRUCT) \
+    $(wildcard include/config/HAVE_ARCH_THREAD_STRUCT_WHITELIST) \
+  include/linux/cred.h \
+    $(wildcard include/config/DEBUG_CREDENTIALS) \
+  include/linux/key.h \
+    $(wildcard include/config/KEY_NOTIFICATIONS) \
+    $(wildcard include/config/NET) \
+  include/linux/assoc_array.h \
+    $(wildcard include/config/ASSOCIATIVE_ARRAY) \
+  include/linux/sched/user.h \
+    $(wildcard include/config/VFIO_PCI_ZDEV_KVM) \
+    $(wildcard include/config/IOMMUFD) \
+    $(wildcard include/config/WATCH_QUEUE) \
+  include/linux/rcu_sync.h \
+  include/linux/delayed_call.h \
+  include/linux/errseq.h \
+  include/linux/ioprio.h \
+  include/linux/sched/rt.h \
+  include/linux/iocontext.h \
+    $(wildcard include/config/BLK_ICQ) \
+  include/uapi/linux/ioprio.h \
+  include/linux/fs_types.h \
+  include/linux/mount.h \
+  include/linux/mnt_idmapping.h \
+  include/linux/slab.h \
+    $(wildcard include/config/DEBUG_SLAB) \
+    $(wildcard include/config/SLUB_TINY) \
+    $(wildcard include/config/FAILSLAB) \
+    $(wildcard include/config/KFENCE) \
+    $(wildcard include/config/SLAB) \
+    $(wildcard include/config/SLUB) \
+  include/linux/percpu-refcount.h \
+  include/linux/kasan.h \
+    $(wildcard include/config/KASAN_STACK) \
+    $(wildcard include/config/KASAN_INLINE) \
+  include/linux/kasan-enabled.h \
+  include/uapi/linux/fs.h \
+  include/linux/quota.h \
+    $(wildcard include/config/QUOTA_NETLINK_INTERFACE) \
+  include/uapi/linux/dqblk_xfs.h \
+  include/linux/dqblk_v1.h \
+  include/linux/dqblk_v2.h \
+  include/linux/dqblk_qtree.h \
+  include/linux/projid.h \
+  include/uapi/linux/quota.h \
 
-/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.o: $(deps_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.o)
+/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.o: $(deps_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.o)
 
-$(deps_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/device-driver/lidar_serial.o):
+$(deps_/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver/lidar_serial.o):

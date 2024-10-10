@@ -1,0 +1,113 @@
+/dts-v1/;
+#include "am33xx.dtsi"
+#include "am335x-bone-common.dtsi"
+//#include "am335x-boneblack-common.dtsi"
+//#include "am335x-boneblack-hdmi.dtsi"
+
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/ {
+	model = "TI AM335x BeagleBone";
+	compatible = "ti,am33xx";
+	
+
+	
+};
+
+&am33xx_pinmux {
+	
+	program_xc3sprog: program_xc3sprog {
+     		pinctrl-single,pins = <
+     			AM33XX_PADCONF(0x830,PIN_OUTPUT, MUX_MODE7) 	/* gpio1_12 	GPIO44	P8_12*/
+     			AM33XX_PADCONF(0x834,PIN_OUTPUT, MUX_MODE7)	/* gpio1_13	GPIO45	P8_11*/     			
+     			AM33XX_PADCONF(0x838,PIN_INPUT_PULLDOWN, MUX_MODE7) 	/* gpio1_14 	GPIO46	P8_16*/
+     			AM33XX_PADCONF(0x83c,PIN_OUTPUT, MUX_MODE7)	/* gpio1_15	GPIO47	P8_15*/
+     		>;     	
+     	};
+
+	i2c1_pins: i2c1-pins {
+		pinctrl-single,pins = <
+			AM33XX_PADCONF(0x958, PIN_INPUT_PULLUP, MUX_MODE2)		/* spi0_d1.i2c2_sda */
+			AM33XX_PADCONF(0x95c, PIN_INPUT_PULLUP, MUX_MODE2)		/* spi0_cs0.i2c2_scl */
+		>;
+	};
+	
+	uart1_pins: uart1-pins {
+		pinctrl-single,pins = <
+			AM33XX_PADCONF(AM335X_PIN_UART1_RXD, PIN_INPUT_PULLUP, MUX_MODE0)
+			AM33XX_PADCONF(AM335X_PIN_UART1_TXD, PIN_OUTPUT_PULLDOWN, MUX_MODE0)
+		>;
+	};
+	
+    	ehrpwm1_pins: ehrpwm1_pins {
+        	pinctrl-single,pins = <
+            		AM33XX_IOPAD(0x848, PIN_OUTPUT | MUX_MODE6) /* P9.14, EHRPWM1A */
+            		AM33XX_IOPAD(0x84c, PIN_OUTPUT | MUX_MODE6) /* P9.16, EHRPWM1B */
+        	>;
+    	};
+    	
+    	ehrpwm2_pins: ehrpwm2_pins {
+        	pinctrl-single,pins = <
+            		AM33XX_IOPAD(0x820, PIN_OUTPUT | MUX_MODE4) /* P8.19, EHRPWM2A */
+            		AM33XX_IOPAD(0x824, PIN_OUTPUT | MUX_MODE4) /* P8.13, EHRPWM2B */
+     		>;
+     	};	
+     	
+};
+
+
+&gpio1{		
+	pinctrl-names = "default";
+	pinctrl-0 = <&program_xc3sprog>;
+	gpios = <&gpio1 12 GPIO_ACTIVE_LOW>,
+		<&gpio1 13 GPIO_ACTIVE_LOW>,
+		<&gpio1 14 GPIO_ACTIVE_LOW>,
+		<&gpio1 15 GPIO_ACTIVE_LOW>;		      
+	gpio-line-names = "TDO", "TCK", "TDI", "TMS";
+};
+
+&i2c1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pins>;
+
+	status = "okay";
+	clock-frequency = <100000>;
+	
+	lidar: lidar_measurement@10{
+		compatible = "lidar,measure_distance";
+		reg = <0x10>;
+	};
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins>;
+	status = "okay";
+	
+	serialuc: comm_uc{
+		compatible = "serialuc,microcontroller";
+	};
+};
+
+&epwmss1 {
+	status = "okay";
+};
+
+&ehrpwm1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&ehrpwm1_pins>;
+};
+
+&epwmss2 {
+	status = "okay";
+};
+
+&ehrpwm2 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&ehrpwm2_pins>;
+};
+
+
+
