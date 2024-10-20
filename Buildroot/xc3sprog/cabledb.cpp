@@ -163,6 +163,8 @@ CABLES_TYPES CableDB::getCableType(const char *given_name)
     return CABLE_MATRIX_CREATOR;
   if (strcasecmp(given_name, "matrix_voice") == 0)
     return CABLE_MATRIX_VOICE;
+  if(strcasecmp(given_name,"sysgpiod_creator") == 0)
+    return CABLE_GPIOD_GPIO_CREATOR;
 
   return CABLE_UNKNOWN;
 }
@@ -179,6 +181,7 @@ const char *CableDB::getCableName(const CABLES_TYPES type )
     case CABLE_MATRIX_VOICE: return "matrix_voice";
     case CABLE_SYSFS_GPIO_CREATOR: return "sysfsgpio_creator";
     case CABLE_SYSFS_GPIO_VOICE: return "sysfsgpio_voice";
+    case CABLE_GPIOD_GPIO_CREATOR: return "sysgpiod_creator";
     case CABLE_NONE: return "none";
     case CABLE_UNKNOWN: return "unknown";
     }

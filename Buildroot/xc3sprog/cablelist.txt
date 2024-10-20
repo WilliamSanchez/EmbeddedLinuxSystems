@@ -45,6 +45,7 @@ arm-usb-ocd-h ftdi    1500000 0x15ba:0x002b::1:0x00:0x10:0x00:0x08
 tumpa         ftdi    1500000 0x0403:0x8a98:TIAO USB Multi-Protocol Adapter:1
 sysfsgpio_creator  sysfsgpio_creator 0     NULL
 sysfsgpio_voice    sysfsgpio_voice   0     NULL
+sysgpiod_creator   sysgpiod_creator  0     NULL
 matrix_creator     matrix_creator    0     NULL
 matrix_voice       matrix_voice      0     NULL
 mimas_a7      ftdi   15000000 0x2A19:0x1009::2:0x00:0x4B:0x00:0x00

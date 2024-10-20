@@ -131,11 +131,17 @@ ADD_CUSTOM_COMMAND(OUTPUT cables.h
 INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 option(USE_WIRINGPI "Use WiringPi" ON)
+option(USE_LIBGPIOD "Use libgpiod" ON)
 
 if(NOT USE_WIRINGPI)
     set (CONDITIONAL_FILES ${CONDITIONAL_FILES} "iomatrixcreator.cpp" "iomatrixvoice.cpp" "iowiringpi.cpp")
     add_definitions( -DUSE_WIRINGPI )
 endif(USE_WIRINGPI)
+
+#if(NOT USE_LIBGPIOD)
+   set(CONDITIONAL_FILES ${CONDITIONAL_FILES} "iosysgpiodcreator.cpp" "sysgpiod.cpp")
+   add_definitions( -DUSE_LIBGPIO )
+#endif(USE_LIBGPIOD)
 
 add_library(xc3sproglib  STATIC sysfs.cpp sysfscreator.cpp sysfsvoice.cpp ioftdi.cpp 
                         iofx2.cpp devicedb.cpp jtag.cpp jedecfile.cpp bitfile.cpp 
@@ -149,6 +155,10 @@ add_library(xc3sproglib  STATIC sysfs.cpp sysfscreator.cpp sysfsvoice.cpp ioftdi
 if(NOT USE_WIRINGPI)
   set(LIBS ${LIBS} wiringPiDev wiringPi)
 endif(USE_WIRINGPI)
+
+#if(NOT USE_LIBGPIOD)
+  set(LIBS ${LIBS} gpiod)
+#endif(USE_LIBGPIO)
 
 add_executable(xc2c_warp xc2c_warp.cpp)
 target_link_libraries(xc2c_warp xc3sproglib ${CONDITIONAL_LIBS})

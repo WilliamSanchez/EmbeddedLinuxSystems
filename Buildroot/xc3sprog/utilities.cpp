@@ -15,7 +15,9 @@
 #include "sysfsvoice.h"
 #include "iomatrixcreator.h"
 #include "iomatrixvoice.h"
+#include "iosysgpiodcreator.h"
 #include "utilities.h"
+
 
 extern char *optarg;
 void detect_chain(Jtag *jtag, DeviceDB *db)
@@ -100,6 +102,14 @@ int  getIO( std::auto_ptr<IOBase> *io, struct cable_t * cable, char const *dev,
       io->get()->setVerbose(verbose);
       res = io->get()->Init(cable, serial, use_freq);
   }
+//#ifdef USE_LIBGIPOD
+  else if(cable->cabletype == CABLE_GPIOD_GPIO_CREATOR)  
+  {
+      io->reset(new IOSysGPIODCreator());
+      io->get()->setVerbose(verbose);
+      res = io->get()->Init(cable, serial, use_freq);
+  }
+//#endif /*USE_LIBGPIOD*/
 #ifdef USE_WIRINGPI
   else if(cable->cabletype == CABLE_MATRIX_CREATOR)
   {
@@ -131,6 +141,7 @@ const char *getCableName(int type)
     case CABLE_XPC: return "xpc"; break;
     case CABLE_SYSFS_GPIO_CREATOR: return "sysfsgpio_creator"; break;
     case CABLE_SYSFS_GPIO_VOICE: return "sysfsgpio_voice"; break;
+    case CABLE_GPIOD_GPIO_CREATOR: return "sysgpiod_creator"; break;
     case CABLE_UNKNOWN: return "unknown"; break;
     default:
         return "Unknown";
