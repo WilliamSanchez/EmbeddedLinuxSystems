@@ -30,7 +30,7 @@ IOSysGPIOD::IOSysGPIOD (int tms, int tck, int tdi, int tdo)
 
 IOSysGPIOD ::~IOSysGPIOD ()
 {
-    gpiod_line_release(TMS);
+  gpiod_line_release(TMS);
   gpiod_line_release(TDI);
   gpiod_line_release(TCK);
   gpiod_line_release(TDO);
