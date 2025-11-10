@@ -1,0 +1,144 @@
+/dts-v1/;
+#include "am33xx.dtsi"
+#include "am335x-bone-common.dtsi"
+#include "am335x-boneblack-common.dtsi"
+#include "am335x-boneblack-hdmi.dtsi"
+
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/ {
+	model = "TI AM335x BeagleBone";
+	compatible = "ti,am335x-bone", "ti,am33xx";
+	
+	pwm_servo {
+		compatible	= "servo_motor,w_pwm_servo_motor";
+		pwms 		= <&ehrpwm1 0 20000000 0>;
+		pwm-names 	= "pwm_servo_motor";
+		pinctrl-names	= "default";
+		//pinctrl-0	= <&ehrpwm1_pins>;
+		enabled		= <0>;
+		duty		= <0>;
+		status = "okay";				
+	};
+	
+	custom_gpio {
+		pinctrl-names = "default";
+		pinctrl-0 = <&user_irq_led_default>;
+		compatible = "button, input-button";
+		
+		led-gpios=<&gpio2 3 GPIO_ACTIVE_HIGH>;
+		sw-gpios=<&gpio2 2 GPIO_ACTIVE_LOW>;
+		
+	};
+};
+
+&am33xx_pinmux {
+
+	pinctrl-name = "default";
+	//pinctrl-0 = <&user_irq_led_default>;
+	
+	user_irq_led_default: user_irq_led_default {
+     		pinctrl-single,pins = <
+     			AM33XX_IOPAD(0x890,PIN_INPUT_PULLDOWN | MUX_MODE7)	/* gpmc_adv_ale.gpio2_2		P8_7*/
+     			AM33XX_IOPAD(0x894,PIN_OUTPUT_PULLDOWN | MUX_MODE7) 	/* gpmc_oen_ren.gpio2_3 	P8_8*/
+     		>;     	
+     	};
+
+	i2c1_pins: i2c1-pins {
+		pinctrl-single,pins = <
+			AM33XX_PADCONF(0x958, PIN_INPUT_PULLUP, MUX_MODE2)		/* spi0_d1.i2c2_sda */
+			AM33XX_PADCONF(0x95c, PIN_INPUT_PULLUP, MUX_MODE2)		/* spi0_cs0.i2c2_scl */
+		>;
+	};
+	
+	uart1_pins: uart1-pins {
+		pinctrl-single,pins = <
+			AM33XX_PADCONF(AM335X_PIN_UART1_RXD, PIN_INPUT_PULLUP, MUX_MODE0)
+			AM33XX_PADCONF(AM335X_PIN_UART1_TXD, PIN_OUTPUT_PULLDOWN, MUX_MODE0)
+		>;
+	};
+	
+    	ehrpwm1_pins: ehrpwm1_pins {
+        	pinctrl-single,pins = <
+            		AM33XX_IOPAD(0x848, PIN_OUTPUT | MUX_MODE6) /* P9.14, EHRPWM1A */
+            		AM33XX_IOPAD(0x84c, PIN_OUTPUT | MUX_MODE6) /* P9.16, EHRPWM1B */
+        	>;
+    	};
+    	
+    	ehrpwm2_pins: ehrpwm2_pins {
+        	pinctrl-single,pins = <
+            		AM33XX_IOPAD(0x820, PIN_OUTPUT | MUX_MODE4) /* P8.19, EHRPWM2A */
+            		AM33XX_IOPAD(0x824, PIN_OUTPUT | MUX_MODE4) /* P8.13, EHRPWM2B */
+     		>;
+     	};	
+     	
+     	user_leds_default: user_leds_default {
+     		pinctrl-single,pins = <
+     			AM33XX_IOPAD(0x810,PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* gpmc_ad4.gpio1_4 		P8_23*/
+     		>;
+     	
+     	};
+};
+
+&spi1 {
+	pinctrl-names = "default";
+	//pinctrl-0 = <&i2c1_pins>;
+
+	status = "okay";
+	//clock-frequency = <100000>;
+	
+	st976s: display_st9776s@10{
+		compatible = "display,display_st9776s";
+	//	reg = <0x10>;
+	};
+
+};
+
+&i2c1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pins>;
+
+	status = "okay";
+	clock-frequency = <100000>;
+	
+	lidar: lidar_measurement@10{
+		compatible = "lidar,measure_distance";
+		reg = <0x10>;
+	};
+
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pins>;
+	status = "okay";
+	
+	serialuc: comm_uc{
+		compatible = "serialuc,microcontroller";
+	};
+};
+
+&epwmss1 {
+	status = "okay";
+};
+
+&ehrpwm1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&ehrpwm1_pins>;
+};
+
+&epwmss2 {
+	status = "okay";
+};
+
+&ehrpwm2 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&ehrpwm2_pins>;
+};
+
+
+
+
+
