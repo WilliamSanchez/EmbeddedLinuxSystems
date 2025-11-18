@@ -8,16 +8,13 @@
 
 / {
 	model = "TI AM335x BeagleBone";
-	compatible = "ti,am335x-bone", "ti,am33xx";
-	
+	compatible = "ti,am335x-bone", "ti,am33xx";	
 	custom_gpio {
 		pinctrl-names = "default";
 		pinctrl-0 = <&user_irq_led_default>;
-		compatible = "button, input-button";
-		
+		compatible = "button, input-button";		
 		led-gpios=<&gpio2 3 GPIO_ACTIVE_HIGH>;
-		sw-gpios=<&gpio2 2 GPIO_ACTIVE_LOW>;
-		
+		sw-gpios=<&gpio2 2 GPIO_ACTIVE_LOW>;		
 	};
 };
 

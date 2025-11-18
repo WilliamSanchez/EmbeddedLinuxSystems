@@ -5,7 +5,6 @@
 #include "am335x-boneblack-hdmi.dtsi"
 
 #include <dt-bindings/interrupt-controller/irq.h>
-#include <dt-bindings/gpio/gpio.h>
 
 / {
 	model = "TI AM335x BeagleBone";
@@ -27,6 +26,7 @@
 &am33xx_pinmux {
 
 	pinctrl-name = "default";
+	//pinctrl-0 = <&user_irq_led_default>;
 
 	i2c1_pins: i2c1-pins {
 		pinctrl-single,pins = <
@@ -58,30 +58,26 @@
      	     	
      	spi1_pins: spi1_pins {
 		pinctrl-single,pins = <
-			0x190 0x33	/* mcasp0_aclkx.spi1_sclk, INPUT_PULLUP | MODE3 			P9-31	*/
-			0x194 0x33	/* mcasp0_fsx.spi1_d0, INPUT_PULLUP | MODE3 				P9_29	*/
-			0x198 0x13	/* mcasp0_axr0.spi1_d1, OUTPUT_PULLUP | MODE3 				P9_30	*/	
-			//0x19c 0x13	/* mcasp0_ahclkr.spi1_cs0, OUTPUT_PULLUP | MODE3 			p9_28	*/
-			AM33XX_IOPAD(0x894,PIN_OUTPUT_PULLDOWN | MUX_MODE7) 	/* gpmc_oen_ren.gpio2_3 	P8_8	*/
-			//AM33XX_IOPAD(0x81C,PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* gpmc_ad4.gpio1_7 		P8_4	*/
+			0x190 0x33	/* mcasp0_aclkx.spi1_sclk, INPUT_PULLUP | MODE3 */
+			0x194 0x33	/* mcasp0_fsx.spi1_d0, INPUT_PULLUP | MODE3 */
+			0x198 0x13	/* mcasp0_axr0.spi1_d1, OUTPUT_PULLUP | MODE3 */
+			0x19c 0x13	/* mcasp0_ahclkr.spi1_cs0, OUTPUT_PULLUP | MODE3 */
+			AM33XX_IOPAD(0x81C,PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* gpmc_ad4.gpio1_4 		P8_4*/
 		>;
 	};
 };
 
 &spi1 {
-	#address-cells = <1>;
-	#size-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&spi1_pins>;
 	status = "okay";
-	spi-max-frequency = <16000000>;	
-	st9776s@0{
-		status = "okay";
-		compatible = "display,st9776s";	
-		cs-gpios = <&gpio3 17 GPIO_ACTIVE_LOW>; /* Chip Select */			
-		command-gpios = <&gpio2 3 GPIO_ACTIVE_LOW>; /* See gpio datasheet pinout mode 7 */				
-		reg = <0>;
+	spi-max-frequency = <16000000>;
+	st9776s: spi@0{
+		compatible = "display,display_st9776s";		
+		spi-cpha;
+		command-gpios=<&gpio1 7 GPIO_ACTIVE_LOW>; /* See gpio datasheet pinout mode 7 */
 	};
+
 };
 
 &i2c1 {
