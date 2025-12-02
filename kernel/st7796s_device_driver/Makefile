@@ -1,4 +1,5 @@
-obj-m += st7796s_device_driver.o
+obj-m += st7796s_driver.o
+st7796s_driver-objs := st7796s_device_driver.o st7796s.o
 
 #KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/kernel/linux-stable
 KDIR := /home/william/Documents/Embedded_Systems/Embedded_Linux/QEMU/buildroot/output/build/linux-6.5

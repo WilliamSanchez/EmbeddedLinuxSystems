@@ -16,10 +16,10 @@
 
 #include <linux/of_gpio.h>
 
-#include "st7796s_device_driver.h"
+#include "st7796s.h"
 
 #define CS_ST9776S_PIN (39)
-#define DEFAULT_FREQ    ( 50000000 )
+#define DEFAULT_FREQ    ( 6000000 )
 
 static const struct of_device_id st7796s_display_of_table[] = {
     {.compatible = "display,st9776s"},
@@ -33,43 +33,23 @@ static struct spi_device_id spi_st7796s [] = {
 };
 MODULE_DEVICE_TABLE(spi, spi_st7796s);
 
-struct display_st7796s_dev {
-    struct display_st7796s_conf *pdata;
-    struct spi_device *spi;
-    struct mutex lock;
-    int addrlen;
-    int size;
-};
-
-static void select_assert(void *context)
-{
-    struct display_st7796s_dev *edev = context;
-    gpiod_set_value_cansleep(edev->pdata->sel_st7796s,1);
-}
-
-static void select_deassert(void *context)
-{
-    struct display_st7796s_dev *edev = context;
-    gpiod_set_value_cansleep(edev->pdata->sel_st7796s,0);
-}
-
 static int st7796s_display_probe(struct spi_device *spi)
 {
     pr_info("Initializing display st7796s");
 
-    struct display_st7796s_conf *st7796s_conf;
-    st7796s_conf = devm_kzalloc(&spi->dev,sizeof(*st7796s_conf),GFP_KERNEL);
-
-    struct mutex lock_spi;
-
     int err;
+    struct display_st7796s_conf *st7796s_conf;
+    struct display_st7796s_dev *st7796s_dev;
+    st7796s_conf = devm_kzalloc(&spi->dev,sizeof(*st7796s_conf),GFP_KERNEL);
+    if(!st7796s_conf)
+        return -ENOMEM;
 
+    st7796s_dev = devm_kzalloc(&spi->dev,sizeof(*st7796s_dev),GFP_KERNEL);
     if(!st7796s_conf)
         return -ENOMEM;
 
     if(spi->dev.of_node)
     {        
-
         st7796s_conf->sel_st7796s = devm_gpiod_get_optional(&spi->dev,"cs",GPIOD_OUT_LOW);
         if(st7796s_conf->sel_st7796s < 0)
         {
@@ -84,7 +64,8 @@ static int st7796s_display_probe(struct spi_device *spi)
             pr_err("Error gpio set direction request %d", CS_ST9776S_PIN);
             return -1;
         }
-        gpiod_set_value_cansleep(st7796s_conf->sel_st7796s, 0);
+        gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
+
 
         st7796s_conf->cmd_st7796s = devm_gpiod_get_optional(&spi->dev,"command",GPIOD_OUT_LOW);
         if(st7796s_conf->cmd_st7796s < 0)
@@ -93,23 +74,15 @@ static int st7796s_display_probe(struct spi_device *spi)
             return -1;
         }
 
+        st7796s_conf->send_command = select_command;
+        st7796s_conf->send_data = select_data;
         if( gpiod_direction_output(st7796s_conf->cmd_st7796s ,1) < 0)
         {
             pr_err("Error gpio set direction request %d", CS_ST9776S_PIN);
             return -1;
         }
-        gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
     }
 
-
-    /*
-    for(int t=0; t< 10; t++){
-        gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-        msleep(250);
-        gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-        msleep(250);
-    }
-    */
 
     struct spi_delay transfer_word_delay = { 
             .unit = SPI_DELAY_UNIT_NSECS, 
@@ -126,7 +99,10 @@ static int st7796s_display_probe(struct spi_device *spi)
     spi->cs_setup = transfer_word_delay;
     spi->cs_hold = transfer_word_delay;
 
-    err = spi_setup(spi);
+    st7796s_dev->spi = spi;
+    st7796s_dev->pdata = st7796s_conf;
+
+    err = spi_setup(st7796s_dev->spi);
     if(err)
     {
         pr_info("not setup spi, error %d",err);
@@ -136,8 +112,6 @@ static int st7796s_display_probe(struct spi_device *spi)
     pr_info("Setup SPIO is OK");
     pr_info("SPI cs :%d",spi->chip_select);
     pr_info("SPI max speed hz %d", spi->max_speed_hz);
-
-    spi->dev.platform_data = st7796s_conf;
 
     /**************************************************************************
      SPI transfers always write the same number of bytes as they read. Protocol 
@@ -149,13 +123,6 @@ static int st7796s_display_probe(struct spi_device *spi)
      If the receive buffer is NULL, the data shifted in will be discarded. Only “len” 
      bytes shift out (or in). 
     **************************************************************************/
-
-    struct spi_delay transfer_delay = { 
-        .unit = SPI_DELAY_UNIT_NSECS, 
-        .value = 1,
-    };
-
-    struct spi_transfer t[2];  
 
     /**************************************************************************
      A spi_message is used to execute an atomic sequence of data transfers, 
@@ -186,565 +153,238 @@ static int st7796s_display_probe(struct spi_device *spi)
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
-const uint16_t Horizontal_line = 320; //320
-const uint16_t Vertical_line = 480;//480;
-
-const uint16_t HORIZONTAL =       320;
-const uint16_t VERTICAL   =       2*480;//125;//
-const uint32_t numPixelbits =   HORIZONTAL*VERTICAL;
+    const uint16_t Horizontal_line = 320; //320
+    const uint16_t Vertical_line = 480;//480;
+    const uint32_t numPixelbits =   2*Horizontal_line*Vertical_line;
 
     uint8_t YMLBs = (Vertical_line >> 8) & 0xFF;
     uint8_t YLSBs = Vertical_line & 0xFF;
     uint8_t XMLBs = (Horizontal_line >> 8) & 0xFF;
     uint8_t XLSBs = Horizontal_line & 0xFF;
 
-
     u8 cmd, data;
 
-    //mutex_lock(&lock_spi);
-    gpiod_set_value_cansleep(st7796s_conf->sel_st7796s, 1);
+    st7796s_dev->pdata->prepare(st7796s_dev);
 
-        /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
+    /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0x01;
-
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_TxData(st7796s_dev,cmd);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-
+    msleep(150);
     /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0xF0;
     data = 0xC3; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
-     /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
+    
+    /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0xF0;
     data = 0x96; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
     
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
     /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
     cmd = 0xC5;
     data = 0x1C; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
+    
      /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0x3A;
     data = 0x55; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
+    
     /////////////////////////////////////////////////////////////////////////////////////////
-
-        memset(&t, 0, sizeof(t));  
 
     cmd = 0x36;
-    data = 0x48; 
+    data = 0x40; //0x88; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
+    
     /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0xB0;
     data = 0x80; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
+    
 
     /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0xB4;
     data = 0x00; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
+    
     /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0xB6;
     const char data_reg[] = {0x80, 0x02, 0x3B};
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = data_reg;
-    t[1].delay = transfer_delay;
-    t[1].len = 3;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, (uint8_t *)data_reg, 3);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
+    
 
     /////////////////////////////////////////////////////////////////////////////////////////
-    
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0xB7;
     data = 0xC6; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
+    
     /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0xF0;
     data = 0x69; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
+    
 
     /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0xF0;
     data = 0x3C; 
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
     /////////////////////////////////////////////////////////////////////////////////////////
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0x2A;
     const char data_col[] = {0x00, 0x00, XMLBs, XLSBs};
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = data_col;
-    t[1].delay = transfer_delay;
-    t[1].len = 4;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, (uint8_t*)data_col, 4);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////
-
-    memset(&t, 0, sizeof(t));  
+    ///////////////////////////////////////////////////////////////////////////////////////// 
 
     cmd = 0x2B;
     const char data_row[] = {0x00, 0x00, YMLBs, YLSBs};
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = data_row;
-    t[1].delay = transfer_delay;
-    t[1].len = 4;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
+    err = st7796s_write_reg(st7796s_dev, cmd, (uint8_t *)data_row, 4);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
-
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
-
     /////////////////////////////////////////////////////////////////////////////////////////
-    memset(&t, 0, sizeof(t));  
 
     cmd = 0x11;
-    data = 0x29; 
-
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    t[1].tx_buf = &data;
-    t[1].delay = transfer_delay;
-    t[1].len = 1;
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    err = spi_sync_transfer(spi,&t[0],1);
-    if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
+    err = st7796s_TxData(st7796s_dev,cmd);
 
     msleep(150);
 
-    err = spi_sync_transfer(spi,&t[1],1);
-     if(err < 0)
-    {
-        pr_info("SPI can not transfer data");
-        return err;
-    }
+    cmd = 0x29;
+    err = st7796s_TxData(st7796s_dev,cmd);
 
   /////////////////////////////////////////////////////////////////////////////////////////
-
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-    gpiod_set_value_cansleep(st7796s_conf->sel_st7796s, 0);
+  
+    //gpiod_set_value_cansleep(st7796s_conf->sel_st7796s, 0);
     //mutex_unlock(&lock_spi);
+    st7796s_dev->pdata->finish(st7796s_dev);
 
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
 
 
     msleep(150);
 
     /////////////////////////////////////////////////////////////////////////////////////////
 
-    memset(&t, 0, sizeof(t));  
+    st7796s_dev->pdata->prepare(st7796s_dev);
 
-    t[0].tx_buf = &cmd;
-    t[0].delay = transfer_delay;
-    t[0].len = 1;
-
-    cmd = 0x2C;
-    uint16_t color = 0;
-
-    gpiod_set_value_cansleep(st7796s_conf->sel_st7796s, 1);
-    gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 1);
-
-    u8 tem=0;
-    while (tem < 256 )
-    {
-        uint16_t *pixel = kmalloc(numPixelbits, GFP_KERNEL);
-        memset(pixel, color, numPixelbits);
+    uint16_t color = 0x05C6;
+    uint16_t *pixel = kmalloc(numPixelbits, GFP_KERNEL);
     
-        t[1].tx_buf = pixel;
-        t[1].delay = transfer_delay;
-        t[1].bits_per_word = 16;
-        t[1].len = numPixelbits;
+    memset(pixel, color, numPixelbits);    
+    st7796s_write_pixel(st7796s_dev, pixel, numPixelbits);
+    kfree(pixel);
 
-        err = spi_sync_transfer(spi,&t[0],1);
-        if(err < 0)
-        {
-            pr_info("SPI can not transfer data");
-            break;
-        }
+    msleep(250);
 
-        gpiod_set_value_cansleep(st7796s_conf->cmd_st7796s, 0);
+    color = 0xFDCF;
+    pixel = kmalloc(numPixelbits, GFP_KERNEL);
+    memset(pixel, color, numPixelbits);
+    st7796s_write_pixel(st7796s_dev, pixel, numPixelbits);
+    kfree(pixel);
 
-        err = spi_sync_transfer(spi,&t[1],1);
-         if(err < 0)
-        {
-            pr_info("SPI can not transfer data"); kfree(pixel);
-            break;
-        }
-        kfree(pixel);
-        tem++;
-        color++;
-        msleep(150);
-    }
+    msleep(250);
 
+    color = 0x001F;
+    pixel = kmalloc(numPixelbits, GFP_KERNEL);
+    memset(pixel, color, numPixelbits);
+    st7796s_write_pixel(st7796s_dev, pixel, numPixelbits);
+    kfree(pixel);
 
-    gpiod_set_value_cansleep(st7796s_conf->sel_st7796s, 0);
+    st7796s_dev->pdata->finish(st7796s_dev);
+
+//mutex_unlock(&lock_spi);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
