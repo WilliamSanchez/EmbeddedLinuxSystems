@@ -1,5 +1,8 @@
 #include "st7796s.h"
 
+
+
+
 void select_assert(void *contex)
 {
     struct display_st7796s_dev *device = contex;
@@ -69,7 +72,6 @@ uint8_t st7796s_write_reg(struct display_st7796s_dev *device, uint8_t reg, uint8
     t[1].delay = transfer_delay;
     t[1].len = len;
 
-    //device->pdata->prepare(device);
     device->pdata->send_command(device);
 
     err = spi_sync_transfer(device->spi,&t[0],1);

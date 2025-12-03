@@ -17,6 +17,7 @@
 #include <linux/of_gpio.h>
 
 #include "st7796s.h"
+#include "images.h"
 
 #define CS_ST9776S_PIN (39)
 #define DEFAULT_FREQ    ( 6000000 )
@@ -148,10 +149,10 @@ static int st7796s_display_probe(struct spi_device *spi)
     */  
 
 
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
 
     const uint16_t Horizontal_line = 320; //320
     const uint16_t Vertical_line = 480;//480;
@@ -180,129 +181,106 @@ static int st7796s_display_probe(struct spi_device *spi)
 
     cmd = 0xF0;
     data = 0xC3; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
     /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0xF0;
     data = 0x96; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
     /////////////////////////////////////////////////////////////////////////////////////////
+    
     cmd = 0xC5;
     data = 0x1C; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
      /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0x3A;
     data = 0x55; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
     /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0x36;
-    data = 0x40; //0x88; 
-
+    data = 0x88; //0x88; 
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
     /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0xB0;
     data = 0x80; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
-
     /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0xB4;
     data = 0x00; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
     /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0xB6;
     const char data_reg[] = {0x80, 0x02, 0x3B};
-
     err = st7796s_write_reg(st7796s_dev, cmd, (uint8_t *)data_reg, 3);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
-    }
-    
-
+    }   
     /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0xB7;
     data = 0xC6; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
     /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0xF0;
     data = 0x69; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
         pr_info("SPI can not transfer data");
         return err;
     }
-    
-
     /////////////////////////////////////////////////////////////////////////////////////////
 
     cmd = 0xF0;
     data = 0x3C; 
-
     err = st7796s_write_reg(st7796s_dev, cmd, &data, 1);
     if(err < 0)
     {
@@ -313,7 +291,6 @@ static int st7796s_display_probe(struct spi_device *spi)
 
     cmd = 0x2A;
     const char data_col[] = {0x00, 0x00, XMLBs, XLSBs};
-
     err = st7796s_write_reg(st7796s_dev, cmd, (uint8_t*)data_col, 4);
     if(err < 0)
     {
@@ -324,7 +301,6 @@ static int st7796s_display_probe(struct spi_device *spi)
 
     cmd = 0x2B;
     const char data_row[] = {0x00, 0x00, YMLBs, YLSBs};
-
     err = st7796s_write_reg(st7796s_dev, cmd, (uint8_t *)data_row, 4);
     if(err < 0)
     {
@@ -340,8 +316,7 @@ static int st7796s_display_probe(struct spi_device *spi)
 
     cmd = 0x29;
     err = st7796s_TxData(st7796s_dev,cmd);
-
-  /////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////
   
     //gpiod_set_value_cansleep(st7796s_conf->sel_st7796s, 0);
     //mutex_unlock(&lock_spi);
@@ -351,7 +326,6 @@ static int st7796s_display_probe(struct spi_device *spi)
     /////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////
-
 
     msleep(150);
 
@@ -381,6 +355,20 @@ static int st7796s_display_probe(struct spi_device *spi)
     memset(pixel, color, numPixelbits);
     st7796s_write_pixel(st7796s_dev, pixel, numPixelbits);
     kfree(pixel);
+
+    msleep(250);
+
+    uint16_t *_pixel = kmalloc(2*Horizontal*Vertical, GFP_KERNEL);
+    sunset(_pixel);
+    st7796s_write_pixel(st7796s_dev, _pixel, numPixelbits);
+    kfree(_pixel);
+
+    msleep(250);
+
+    uint16_t *_william = kmalloc(2*Horizontal*Vertical, GFP_KERNEL);
+    william(_william);
+    st7796s_write_pixel(st7796s_dev, _william, numPixelbits);
+    kfree(_william);
 
     st7796s_dev->pdata->finish(st7796s_dev);
 
