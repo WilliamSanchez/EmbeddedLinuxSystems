@@ -15,9 +15,12 @@ sudo tar -xvf "rootfs.tar"
 sudo rm -rf "rootfs.tar"
 
 cd "/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver"
-sudo make install
+#sudo make install
 
 cd "/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/pwm_device_driver"
+#sudo make install
+
+cd "/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/ov7670_st7796s"
 sudo make install
 
 if [[ $1 = "demons" ]]; then
