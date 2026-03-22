@@ -125,14 +125,19 @@
 	status = "okay";
 	clock-frequency = <400000>;
 	
+	mlx90640: infrared_sensor@33{
+		compatible = "mlx90640,infrared_image";
+		reg = <0x33>;
+	};
+
 	lidar: lidar_measurement@10{
 		compatible = "lidar,measure_distance";
 		reg = <0x10>;
 	};
 
-	ov7670: image_ov7670@42{
-		compatible = "ov7670,sensor_ov7670";
-		reg = <0x42>;		
+	ov7670: image_sensor@21{
+		compatible = "ov7670,image_sensor";
+		reg = <0x21>;		
 		pclk-gpios=<&gpio2 6 GPIO_ACTIVE_LOW>;
 		hsync-gpios=<&gpio2 8 GPIO_ACTIVE_LOW>;
 		vsync-gpios=<&gpio2 10 GPIO_ACTIVE_LOW>;

@@ -37,7 +37,7 @@ static int ov7670_probe(struct i2c_client *client)
 
     //int major;
     unsigned char data[2];
-    u8 reg_addr;
+    unsigned char reg_addr[2];
     struct i2c_msg msg[2];
     //int err;
 
@@ -55,10 +55,11 @@ static int ov7670_probe(struct i2c_client *client)
     //0x0A PID        => 76 MSB
     //0x0B VER        => 73 LSB
 
-    reg_addr[0]=0x00;
-    reg_addr[1]=0x00;
+    reg_addr[0]=0x0A;
+    reg_addr[1]=0x0B;
 
-    msg[0].addr = 0x21; //client->addr;
+    msg[0].addr = client->addr;
+    msg[0].flags=0;         //  write
     msg[0].flags=0;         //  write
     msg[0].len=1;           //  Address is 2 byte coded
     msg[0].buf=reg_addr;
@@ -70,7 +71,7 @@ static int ov7670_probe(struct i2c_client *client)
 
     if(i2c_transfer(client->adapter,msg,2)<0)
     {
-        pr_err("ov7670: i2c transfer failed\n");
+        pr_err("ov7670 [%x]: i2c transfer failed\n",client->addr);
         return -ENODEV;
     }
 
@@ -96,7 +97,7 @@ static const struct i2c_device_id i2c_ov7670_id[] ={
 MODULE_DEVICE_TABLE(i2c,i2c_ov7670_id);
 
 static const struct of_device_id ov7670_id[]={
-    {.compatible="ov7670,sensor_ov7670"},
+    {.compatible="ov7670,image_sensor"},
     {},
 };
 

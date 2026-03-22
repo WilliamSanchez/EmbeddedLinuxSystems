@@ -46,7 +46,7 @@ static int st7796s_display_probe(struct spi_device *spi)
         return -ENOMEM;
 
     st7796s_dev = devm_kzalloc(&spi->dev,sizeof(*st7796s_dev),GFP_KERNEL);
-    if(!st7796s_conf)
+    if(!st7796s_dev)
         return -ENOMEM;
 
     if(spi->dev.of_node)
