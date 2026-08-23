@@ -1,6 +1,6 @@
 #obj-m += ov7670_device_driver.o
-obj-m += mlx9060_driver.o
-mlx9060_driver-objs := mlx90640_device_driver.o mlx90640.o
+obj-m += mlx90640_driver.o
+mlx90640_driver-objs := mlx90640_device_driver.o mlx90640.o
 #obj-m += st7796s_driver.o
 #st7796s_driver-objs := st7796s_device_driver.o st7796s.o
 

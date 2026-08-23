@@ -1,0 +1,4 @@
+config BR2_PACKAGE_BLUETOOTH_SERIAL
+	bool "bluetooth to serial"
+	help
+	  A service to communciate with a evice using bluetooth protocol

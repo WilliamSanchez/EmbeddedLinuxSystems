@@ -11,17 +11,22 @@ echo "file_nfsroot= $file_nfsroot"
 sudo rm -rf "$file_nfsroot*"
 sudo cp $file_root $file_nfsroot
 cd $file_nfsroot
-sudo tar -xvf "rootfs.tar" 
+sudo tar -xvf "rootfs.tar"
 sudo rm -rf "rootfs.tar"
 
 cd "/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/lidar_serial-device-driver"
+#sudo make install
+
+##### No FUNCIONA ESE COMANDO
+cd "/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/Bluetooth_serial-device-driver"
+#sudo rm "/home/william/Documents/Embedded_Systems/Embedded_Linux/kernel/BB/nfsroot/lib/modules/6.5.0/updates/bluetooth_serial.ko"
 #sudo make install
 
 cd "/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/pwm_device_driver"
 #sudo make install
 
 cd "/home/william/Documents/Embedded_Systems/Embedded_Linux/EmbeddedLinuxSystems/kernel/ov7670_st7796s"
-sudo make install
+#sudo make install
 
 if [[ $1 = "demons" ]]; then
   echo "Installing demonds"
