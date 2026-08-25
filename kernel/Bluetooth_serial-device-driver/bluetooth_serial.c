@@ -21,6 +21,7 @@ struct serdev_device *BluetoothSerial;
 
 uint8_t *datafromuser;
 uint8_t *datatopc;
+static char bluetoothtopc[1024];
 
 static int bluetooth_probe(struct serdev_device *serdev);
 static void bluetooth_remove(struct serdev_device *serdev);
@@ -43,11 +44,12 @@ int serialpc_release(struct inode *inode, struct file *filp)
 
 static ssize_t serialpc_read(struct file *filp, char __user *buffer, size_t length, loff_t *loff)
 {
-    if(copy_to_user(buffer, datatopc, strlen(datatopc)) != 0){
+    //if(copy_to_user(buffer, datatopc, strlen(datatopc)) != 0){
+    if(copy_to_user(buffer, bluetoothtopc, strlen(bluetoothtopc)) != 0){
     	pr_err("bluetooth: transfer data to user failed\n");
 		goto end_read;
     } 
-	memset(datatopc,0x00,strlen(datatopc));
+	//memset(datatopc,0x00,strlen(datatopc));
     return 0;
      
     end_read:
@@ -101,11 +103,12 @@ static struct serdev_device_driver bluetooth_driver = {
 
 static int serdev_bluetooth_recv(struct serdev_device *serdev, const unsigned char *buffer, size_t size){
 	//printk("bluetooth echo - Received %d bytes with %s",size, buffer);
-	if(strstr(buffer,"\r")){
-		memcpy(datatopc,buffer,size-1);	
+	//if(strstr(buffer,"\r")){
+		//memcpy(datatopc,buffer,size);	
+		memcpy(bluetoothtopc,buffer,size);
 		return size; //serdev_device_write_buf(serdev, buffer, size);
-	}
-	return 0;
+	//}
+	//return 0;
 
 }
 

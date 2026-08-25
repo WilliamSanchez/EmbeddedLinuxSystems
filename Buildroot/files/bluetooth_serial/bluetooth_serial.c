@@ -18,6 +18,7 @@ int main()
    printf("\nINIT Bluetooth Serial program\n");
    
    fd = open("/dev/bluetooth_serial",O_RDWR);      
+   //fd = open("/dev/serial_micro_to_pc",O_RDWR); 
    if(fd < 0)
    {
    	 printf("Cannot open device file...\n");
@@ -39,13 +40,14 @@ int main()
 //   }
   
    while(1){
- 	count = read(fd, read_buf, 128);
+ 	count = read(fd, read_buf, 32);
  	//if(count > 0)
  	//{
- 		printf("Data: %s len: %d\n\r",read_buf, count);
+ 		printf("Data: %s len: %d\n",read_buf, count);
  	//}
-	
-	sleep(1);
+	//memset(read_buf,0x00,128);
+	//sleep(1);
+	usleep(50000); //50ms
    }
    close(fd);
 
