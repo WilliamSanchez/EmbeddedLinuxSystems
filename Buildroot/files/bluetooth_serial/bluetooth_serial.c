@@ -39,13 +39,26 @@ int main()
    	sleep(2);
 //   }
   
+  /*
+  
+  Aileron: −1 = maximum one direction, 0 = neutral, +1 = maximum other direction.
+Elevator: −1 = maximum one direction, 0 = neutral, +1 = maximum other direction.
+Rudder: −1 = maximum one direction, 0 = neutral, +1 = maximum other direction.
+
+      cdata.aileron = 2*(3300 - (double)_aileron)/3300-1;
+      cdata.rudder = 2*(3300 - (double)_rudder)/3300-1;
+      cdata.throttle = (double)_throttle/255;
+      cdata.elevator = 2*(3300 - (double)_elevator)/3300-1;
+  
+  */
+  
    while(1){
- 	count = read(fd, read_buf, 32);
+ 	count = read(fd, read_buf, 128);
  	//if(count > 0)
  	//{
- 		printf("Data: %s len: %d\n",read_buf, count);
+ 		printf("len: %d Data: %s\n",strlen(read_buf), read_buf);
  	//}
-	//memset(read_buf,0x00,128);
+	memset(read_buf,0x00,128);
 	//sleep(1);
 	usleep(50000); //50ms
    }

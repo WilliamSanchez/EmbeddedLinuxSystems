@@ -4,6 +4,7 @@
 #include <linux/mod_devicetable.h>
 #include <linux/property.h>
 #include <linux/of_device.h>
+#include <linux/mutex.h>
 
 #include <linux/fs.h>
 #include <linux/uaccess.h>
@@ -11,6 +12,7 @@
 #define DEVICE_NAME  "bluetooth_serial"
 #define mem_size	1024
 
+static DEFINE_MUTEX(mymutex);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("William Sanchez");
@@ -45,11 +47,14 @@ int serialpc_release(struct inode *inode, struct file *filp)
 static ssize_t serialpc_read(struct file *filp, char __user *buffer, size_t length, loff_t *loff)
 {
     //if(copy_to_user(buffer, datatopc, strlen(datatopc)) != 0){
+	mutex_lock(&mymutex);
     if(copy_to_user(buffer, bluetoothtopc, strlen(bluetoothtopc)) != 0){
     	pr_err("bluetooth: transfer data to user failed\n");
+		mutex_unlock(&mymutex);
 		goto end_read;
     } 
-	//memset(datatopc,0x00,strlen(datatopc));
+	memset(bluetoothtopc,0x00,strlen(bluetoothtopc));
+	mutex_unlock(&mymutex);
     return 0;
      
     end_read:
@@ -102,10 +107,12 @@ static struct serdev_device_driver bluetooth_driver = {
 };
 
 static int serdev_bluetooth_recv(struct serdev_device *serdev, const unsigned char *buffer, size_t size){
-	//printk("bluetooth echo - Received %d bytes with %s",size, buffer);
-	//if(strstr(buffer,"\r")){
-		//memcpy(datatopc,buffer,size);	
+	printk("bluetooth echo - Received %d",size);
+	//if(strcmp(buffer, "\r") == 0){
+		//memcpy(datatopc,buffer,size);
+		mutex_lock(&mymutex);
 		memcpy(bluetoothtopc,buffer,size);
+		mutex_unlock(&mymutex);
 		return size; //serdev_device_write_buf(serdev, buffer, size);
 	//}
 	//return 0;

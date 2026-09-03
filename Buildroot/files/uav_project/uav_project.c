@@ -131,7 +131,7 @@ int config_microcontroller()
 {
 
    //fd_uc = open("/dev/serial_micro_to_pc",O_RDWR);   
-   fd_uc = open("/dev/bluetooth_serial",O_RDWR);  
+   fd_uc = open("/dev/bluetooth_serial",O_RDWR);    
    if(fd_uc < 0)
    {
    	 printf("Cannot open device file serial_micro_to_pc...\n");
