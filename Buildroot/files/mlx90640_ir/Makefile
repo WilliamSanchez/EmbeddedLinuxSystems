@@ -1,5 +1,5 @@
 CFLAGS=-Wall -g
-PROGS=mlx90640_IR
+PROGS=mlx90640_ir
 
 all: $(PROGS)
 

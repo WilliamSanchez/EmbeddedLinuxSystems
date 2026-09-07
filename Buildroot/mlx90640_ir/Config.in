@@ -1,0 +1,4 @@
+config BR2_PACKAGE_MLX90640_IR
+	bool "User to set a mlx90640 camera ir"
+	help
+	  configure a camera ir
