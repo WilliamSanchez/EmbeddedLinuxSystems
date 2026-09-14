@@ -68,10 +68,7 @@ static int lidar_release(struct inode *inode, struct file *file)
     return 0;
 }
 
-
-
 /*	READ		*/
-
 ssize_t lidar_read(struct file *filp, char __user *buf, size_t count, loff_t *f_ops)
 {
 
@@ -120,9 +117,7 @@ ssize_t lidar_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
     return retval;
 }
 
-
 /*	WRITE		*/
-
 ssize_t lidar_write(struct file *file, const char __user *buf, size_t count, loff_t *f_ops)
 {
 

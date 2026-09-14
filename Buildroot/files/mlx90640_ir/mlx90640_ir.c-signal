@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <signal.h>
+
+#define REG_CURRENT_TASK _IOW('a','a',int32_t*)
+
+#define SIGETX 44
+
+static int done=0;
+int check = 0;
+void *ptr;
+int fd;
+
+uint8_t read_buf[4096];
+
+void sig_event_handler(int n, siginfo_t *info, void *unusde)
+{
+   if(n==SIGETX)
+   {
+      char send[]={0x03, 0x05};
+
+      check = info->si_int;
+      printf("Received signal and data from kernel: value = %u\n",check);
+      ptr = mmap(NULL,4096,PROT_READ | PROT_WRITE,MAP_SHARED,fd,0);
+      if(ptr != MAP_FAILED)
+      {
+         memset(read_buf,0,4096);    
+         memcpy(read_buf,ptr,4096);
+         for(int i=0; i<32;i++)
+         {
+            printf("%d data[%d]\n",i,read_buf[i]);
+         }
+         munmap(ptr,4096);
+      }
+      write(fd,send,2);
+   }
+}
+
+int main()
+{
+   int32_t number;
+   struct sigaction act;
+
+   sigemptyset(&act.sa_mask);
+   act.sa_flags = (SA_SIGINFO | SA_RESTART);
+   act.sa_sigaction = sig_event_handler;
+   sigaction(SIGETX,&act,NULL);
+
+   printf("Installed signal handler for SIGETX=%d\n",SIGETX);
+
+   fd=open("/dev/etx_device",O_RDWR);
+   if(fd<0)
+   {
+      printf("Cannot open device file ...");
+      return 0;
+   }
+
+   printf("Registerin application..\n");
+   if(ioctl(fd,REG_CURRENT_TASK,(int32_t*)&number))
+   {  
+      printf("failed");
+      close(fd);
+      exit(1);
+   }
+
+   while(1){
+      printf("Waiting for signal..\n");
+      while(!done && !check){};
+   	check =0;
+   }
+
+   close(fd);
+   return 0;
+}
