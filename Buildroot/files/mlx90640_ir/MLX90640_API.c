@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <MLX90640_API.h>
 #include <math.h>
+#include <string.h>
 
 static void ExtractVDDParameters(uint16_t *eeData, paramsMLX90640 *mlx90640);
 static void ExtractPTATParameters(uint16_t *eeData, paramsMLX90640 *mlx90640);
@@ -35,8 +36,8 @@ static int ExtractDeviatingPixels(uint16_t *eeData, paramsMLX90640 *mlx90640);
 static int CheckAdjacentPixels(uint16_t pix1, uint16_t pix2);  
 //static float GetMedian(float *values, int n);
 //static int IsPixelBad(uint16_t pixel,paramsMLX90640 *params);
-//static int ValidateFrameData(uint16_t *frameData);
-//static int ValidateAuxData(uint16_t *auxData);
+static int ValidateFrameData(uint16_t *frameData);
+static int ValidateAuxData(uint16_t *auxData);
 /*  
 int MLX90640_DumpEE(uint8_t slaveAddr, uint16_t *eeData)
 {
@@ -111,55 +112,24 @@ int MLX90640_TriggerMeasurement(uint8_t slaveAddr)
     return MLX90640_NO_ERROR;    
 }
 */   
-/* 
-int MLX90640_GetFrameData(uint16_t *rawData, uint16_t *frameData)
+ 
+int MLX90640_GetFrameData(uint16_t *rawData, uint16_t status_register, uint16_t control_register,  uint16_t *frameData)
 {
-    uint16_t dataReady = 0;
-    uint16_t controlRegister1;
-    uint16_t statusRegister;
+
+    uint16_t controlRegister1 = control_register;
+    uint16_t statusRegister = status_register;
     int error = 1;
     uint16_t data[64];
-    uint8_t cnt = 0;
-    
-    while(dataReady == 0)
-    {
-        error = MLX90640_I2CRead(slaveAddr, MLX90640_STATUS_REG, 1, &statusRegister);
-        if(error != MLX90640_NO_ERROR)
-        {
-            return error;
-        }    
-        //dataReady = statusRegister & 0x0008;
-        dataReady = MLX90640_GET_DATA_READY(statusRegister); 
-    }      
-    
-    error = MLX90640_I2CWrite(slaveAddr, MLX90640_STATUS_REG, MLX90640_INIT_STATUS_VALUE);
-    if(error == -MLX90640_I2C_NACK_ERROR)
+    uint8_t cnt = 0;     
+
+    error = ValidateFrameData(rawData);
+    if (error != MLX90640_NO_ERROR)
     {
         return error;
-    }
-                     
-    error = MLX90640_I2CRead(slaveAddr, MLX90640_PIXEL_DATA_START_ADDRESS, MLX90640_PIXEL_NUM, frameData); 
-    if(error != MLX90640_NO_ERROR)
-    {
-        return error;
-    }                       
+    }    
+    memcpy((void*)frameData, rawData, MLX90640_PIXEL_NUM*(sizeof(uint16_t)));
     
-    error = MLX90640_I2CRead(slaveAddr, MLX90640_AUX_DATA_START_ADDRESS, MLX90640_AUX_NUM, data); 
-    if(error != MLX90640_NO_ERROR)
-    {
-        return error;
-    }     
-        
-    error = MLX90640_I2CRead(slaveAddr, MLX90640_CTRL_REG, 1, &controlRegister1);
-    frameData[832] = controlRegister1;
-    //frameData[833] = statusRegister & 0x0001;
-    frameData[833] = MLX90640_GET_FRAME(statusRegister);
-    
-    if(error != MLX90640_NO_ERROR)
-    {
-        return error;
-    }
-    
+    memcpy((void*)data,&rawData[MLX90640_PIXEL_NUM],64*(sizeof(uint16_t)));
     error = ValidateAuxData(data);
     if(error == MLX90640_NO_ERROR)
     {
@@ -168,13 +138,11 @@ int MLX90640_GetFrameData(uint16_t *rawData, uint16_t *frameData)
             frameData[cnt+MLX90640_PIXEL_NUM] = data[cnt];
         }
     }        
-    
-    error = ValidateFrameData(frameData);
-    if (error != MLX90640_NO_ERROR)
-    {
-        return error;
-    }
-    
+
+    frameData[832] = controlRegister1;
+    //frameData[833] = statusRegister & 0x0001;
+    frameData[833] = MLX90640_GET_FRAME(statusRegister);
+
     return frameData[833];    
 }
 
@@ -229,7 +197,7 @@ static int ValidateAuxData(uint16_t *auxData)
     return MLX90640_NO_ERROR;
     
 }
- */   
+    
 int MLX90640_ExtractParameters(uint16_t *eeData, paramsMLX90640 *mlx90640)
 {
     int error = 0;
@@ -391,7 +359,7 @@ int MLX90640_GetCurMode(uint8_t slaveAddr)
 }
 
 //------------------------------------------------------------------------------
-
+*/
 void MLX90640_CalculateTo(uint16_t *frameData, const paramsMLX90640 *params, float emissivity, float tr, float *result)
 {
     float vdd;
@@ -524,7 +492,7 @@ void MLX90640_CalculateTo(uint16_t *frameData, const paramsMLX90640 *params, flo
 }
 
 //------------------------------------------------------------------------------
-*/
+
 void MLX90640_GetImage(uint16_t *frameData, const paramsMLX90640 *params, float *result)
 {
     float vdd;

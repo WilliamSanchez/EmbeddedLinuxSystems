@@ -34,22 +34,39 @@ void *ptr;
 int fd;
 float image_temp[768];
 
-uint16_t frame_data[832];
+uint16_t frame_data[834];
+uint16_t raw_data[832];
 
 void sig_event_handler(int n, siginfo_t *info, void *unusde)
 {
    if(n==SIGGETFRAME)
    {
       char send[]={0x03, 0x05};
-      printf("Received mlx90640 status register: value = %x\n",mlx90640_dataID.status_register);
-      check = info->si_int;
-      printf("Received signal and data from kernel: value = %u\n",check);
+      printf("Received mlx90640 control register: value = %x\n",mlx90640_dataID.control_register);
+      check = 1+info->si_int;
+      printf("Received signal and data from kernel: status register = %x\n",info->si_int);
       ptr = mmap(NULL,832*sizeof(uint16_t),PROT_READ | PROT_WRITE,MAP_SHARED,fd,0);
       if(ptr != MAP_FAILED)
       {
-         memset(frame_data,0,832*sizeof(uint16_t));    
-         memcpy(frame_data,ptr,832*sizeof(uint16_t));
-         printf("\n**************************   FRAME DATA  ********************************************************************\n");
+         memset(raw_data,0,832*sizeof(uint16_t));    
+         memcpy(raw_data,ptr,832*sizeof(uint16_t));
+//         printf("\n**************************   FRAME DATA  ********************************************************************\n");
+//         printf("\t0\t1\t2\t3\t4\t5\t6\t7\t8\t9\tA\tB\tC\tD\tE\tF\n");
+//         for(int i=0; i<52;i++)
+//         {  printf("%x",0x0400+i*16);
+//            for(int j=0; j<16; j++)
+//            {
+//               printf("\t%x",frame_data[i*16+j]);
+//            }
+//            printf("\n");
+//         }
+//         printf("\n************************************************************************************************************\n");
+         munmap(ptr,832);
+      }
+
+      if (!MLX90640_GetFrameData(raw_data, info->si_int, mlx90640_dataID.control_register,  frame_data))
+      {
+         printf("\n**************************   FRAME DATA  OK ********************************************************************\n");
          printf("\t0\t1\t2\t3\t4\t5\t6\t7\t8\t9\tA\tB\tC\tD\tE\tF\n");
          for(int i=0; i<52;i++)
          {  printf("%x",0x0400+i*16);
@@ -59,10 +76,16 @@ void sig_event_handler(int n, siginfo_t *info, void *unusde)
             }
             printf("\n");
          }
-         printf("\n************************************************************************************************************\n");
-/*
-         MLX90640_GetImage(frame_data, &ext_paramsMLX90640, image_temp);
-         printf("\n**************************   FRAME DATA  ********************************************************************\n");
+         printf("\n****************************************************************************************************************\n");
+      }
+         float Tr = 0.0;
+         Tr = MLX90640_GetTa(frame_data, &ext_paramsMLX90640) - TA_SHIFT;
+         printf("\tTemperature calculate = %.2f",Tr);
+
+         float emissivity = 0.95;
+//         MLX90640_GetImage(frame_data, &ext_paramsMLX90640, image_temp);
+         MLX90640_CalculateTo(frame_data, &ext_paramsMLX90640, emissivity, Tr, image_temp);
+         printf("\n**************************   IMAGE        ********************************************************************\n");
          printf("\t0\t1\t2\t3\t4\t5\t6\t7\t8\t9\t11\n");
          for(int i=0; i<32*2;i++)
          {  printf("%x",i*11);
@@ -73,9 +96,8 @@ void sig_event_handler(int n, siginfo_t *info, void *unusde)
             printf("\n");
          }
          printf("\n************************************************************************************************************\n");
-*/
-         munmap(ptr,832);
-      }
+      
+
       write(fd,send,2);
    }
 }

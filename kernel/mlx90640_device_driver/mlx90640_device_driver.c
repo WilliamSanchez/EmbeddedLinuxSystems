@@ -43,8 +43,7 @@ struct mlx90640_device_id_parameter {
 
 struct mlx90640_dev {
     struct i2c_client *client;
-    struct work_struct work;
-    struct mutex lock;
+    struct mutex mlx90640_lock;
     struct cdev mlx90640_cdev;
     dev_t devt;
 };
@@ -67,6 +66,7 @@ static uint16_t *mlx90640_frameData = NULL;
 static int signum = 0;
 
 static ssize_t readReg_mlx90640(uint16_t reg, size_t len, uint16_t *buf);
+static ssize_t writeReg_mlx90640(uint16_t reg, size_t len, uint16_t *buf);
 
 int thread_wait_frame_data(void *unused)
 {
@@ -77,6 +77,8 @@ int thread_wait_frame_data(void *unused)
         conSignal++;
         pr_info("Waiting for event ...");
         wait_event_interruptible(wait_queue_new_frame, wait_queue_newData_flag !=0);
+
+        mutex_lock(&mlx90640_dev_t->mlx90640_lock);
         for (int i = 0; i < 832; i = (i == 0) ? 15 : i + 16)
         {
             reg_ID = 0x0400+i;
@@ -90,7 +92,7 @@ int thread_wait_frame_data(void *unused)
         memset(&info, 0, sizeof(struct siginfo));
         info.si_signo = SIGGETFRAME;
         info.si_code = SI_QUEUE;
-        info.si_int = 1;
+        info.si_int = mlx90640_parameter_ID.status_register;
         if(send_signal != NULL)
         {
           pr_info("Sending signal to app\n");
@@ -101,6 +103,7 @@ int thread_wait_frame_data(void *unused)
         }
         pr_info("Send signal OK ...");
         wait_queue_newData_flag = 0;
+        mutex_unlock(&mlx90640_dev_t->mlx90640_lock);
     }
     return 0;
 }
@@ -112,11 +115,12 @@ int thread_get_frame(void *thread_arg)
   uint16_t status_register;
   while(!kthread_should_stop())
   {
-   
+    mutex_lock(&mlx90640_dev_t->mlx90640_lock);
     readReg_mlx90640(0x8000, 1, &status_register);
-    i++;
-    pr_info("%d In Thread kernel function status register %x\n", t, status_register);
-    if((status_register&0x0004) != 0){
+    mutex_unlock(&mlx90640_dev_t->mlx90640_lock);
+    mlx90640_parameter_ID.status_register = status_register;
+    pr_info("%d In Thread kernel function status register %x\n", t, mlx90640_parameter_ID.status_register);
+    if((status_register&0x0008) != 0){
         wait_queue_newData_flag = 1;
         wake_up_interruptible(&wait_queue_new_frame);
     }
@@ -173,6 +177,18 @@ uint16_t reg_ID;
         break;
     
     case RD_DEVICE_PARAMETERS:
+        if(readReg_mlx90640(0x800D, 1, &mlx90640_parameter_ID.control_register) < 0)
+        {
+            pr_err("Not read control register ..\n");
+            break;
+        }
+
+        if(readReg_mlx90640(0x800F, 1, &mlx90640_parameter_ID.configuration_register) < 0)
+        {
+            pr_err("Not read configuration register ..\n");
+            break;
+        }
+
         for (int i = 0; i < 832; i = (i == 0) ? 15 : i + 16)
         {
             reg_ID = START_PARAMETERS+i;
@@ -182,6 +198,7 @@ uint16_t reg_ID;
                 break;
             }
         }
+        
         if(copy_to_user((void __user *)arg, &mlx90640_parameter_ID, sizeof(mlx90640_parameter_ID)))
         {
             pr_err("Error get parameter device\n");
@@ -259,7 +276,7 @@ static ssize_t readReg_mlx90640(uint16_t reg, size_t len, uint16_t *buf)
     return len;
 }
 
-static ssize_t readReg_mlx90640(uint16_t reg, size_t len, uint16_t *buf)
+static ssize_t writeReg_mlx90640(uint16_t reg, size_t len, uint16_t *buf)
 {
     u8 reg_init[2];
     struct i2c_msg msg_init[2];
@@ -331,7 +348,7 @@ static int mlx90640_probe(struct i2c_client *client)
     	return major;
     }
 
-    mutex_init(&mlx90640_dev_t->lock);
+    mutex_init(&mlx90640_dev_t->mlx90640_lock);
 
     device = device_create(mlx90640_class,NULL,MKDEV(major,0),NULL,DEVICE_NAME);
     if(IS_ERR(device)){
@@ -340,9 +357,9 @@ static int mlx90640_probe(struct i2c_client *client)
         goto fail;     
     }
  
-    mutex_lock(&mlx90640_dev_t->lock);
+    mutex_lock(&mlx90640_dev_t->mlx90640_lock);
     i2c_set_clientdata(mlx90640_dev_t->client, mlx90640_dev_t);
-    mutex_unlock(&mlx90640_dev_t->lock);
+    mutex_unlock(&mlx90640_dev_t->mlx90640_lock);
 
     //PAGE_SIZE =  the size of one memory page. It is architecture-dependent, commonly 4096 bytes (4 KiB).
     //GFP_DMA   =   a memory-allocation flag requesting memory from a region suitable for DMA on systems where DMA has address limitations. 

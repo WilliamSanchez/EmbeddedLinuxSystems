@@ -76,6 +76,7 @@
 #define POW2(x) pow(2, (double)x) 
 
 #define SCALEALPHA 0.000001
+#define TA_SHIFT 8
     
 typedef struct
     {
@@ -111,12 +112,12 @@ typedef struct
     //int MLX90640_DumpEE(uint8_t slaveAddr, uint16_t *eeData);
     //int MLX90640_SynchFrame(uint8_t slaveAddr);
     //int MLX90640_TriggerMeasurement(uint8_t slaveAddr);
-    //int MLX90640_GetFrameData(uint8_t slaveAddr, uint16_t *frameData);
+    int MLX90640_GetFrameData(uint16_t *rawData, uint16_t status_register, uint16_t control_register,  uint16_t *frameData);
     int MLX90640_ExtractParameters(uint16_t *eeData, paramsMLX90640 *mlx90640);
     float MLX90640_GetVdd(uint16_t *frameData, const paramsMLX90640 *params);
     float MLX90640_GetTa(uint16_t *frameData, const paramsMLX90640 *params);
     void MLX90640_GetImage(uint16_t *frameData, const paramsMLX90640 *params, float *result);
-    //void MLX90640_CalculateTo(uint16_t *frameData, const paramsMLX90640 *params, float emissivity, float tr, float *result);
+    void MLX90640_CalculateTo(uint16_t *frameData, const paramsMLX90640 *params, float emissivity, float tr, float *result);
     //int MLX90640_SetResolution(uint8_t slaveAddr, uint8_t resolution);
     //int MLX90640_GetCurResolution(uint8_t slaveAddr);
     //int MLX90640_SetRefreshRate(uint8_t slaveAddr, uint8_t refreshRate);   
